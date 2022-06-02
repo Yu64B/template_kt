@@ -1,0 +1,362 @@
+{
+	// Place your snippets for kotlin here. Each snippet is defined under a snippet name and has a prefix, body and 
+	// description. The prefix is what is used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. Placeholders with the 
+	// same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+	"Template": {
+		"prefix": ["$$$"],
+		"body": [
+			"import java.io.PrintWriter",
+			"fun main() {",
+			"\tvar error: Throwable? = null",
+			"\tval thread = Thread(null, ::runner, \"runner\", 128L * 1024 * 1024)",
+			"\tthread.setUncaughtExceptionHandler { _, e -> error = e }",
+			"\tthread.start()",
+			"\tthread.join()",
+			"\terror?.let { throw it }",
+			"}",
+			"fun runner() {",
+			"\tval writer = PrintWriter(System.out, false) // boolean autoFlush",
+			"\twriter.solve()",
+			"\twriter.close()",
+			"}",
+			"fun PrintWriter.solve() {",
+			"\t$0",
+			"}",
+			""
+		],
+		"description": "Template"
+	},
+	"Read string": {
+		"prefix": ["string", "read", "readLine()!!"],
+		"body": "readLine()!!",
+		"description": "Read string"
+	},
+	"Read int": {
+		"prefix": ["int", "read", "readLine()!!"],
+		"body": "readLine()!!.toInt()",
+		"description": "Read int"
+	},
+	"Read long": {
+		"prefix": ["long", "read", "readLine()!!"],
+		"body": "readLine()!!.toLong()",
+		"description": "Read long"
+	},
+	"Read string list": {
+		"prefix": ["stringlist", "read", "readLine()!!"],
+		"body": "readLine()!!.split(' ')",
+		"description": "Read string list"
+	},
+	"Read int list": {
+		"prefix": ["intlist", "read", "readLine()!!"],
+		"body": "readLine()!!.split(' ').map { it.toInt() }",
+		"description": "Read int list"
+	},
+	"Read long list": {
+		"prefix": ["longlist", "read", "readLine()!!"],
+		"body": "readLine()!!.split(' ').map { it.toLong() }",
+		"description": "Read long list"
+	},
+	/*
+	"Read": {
+		"prefix": ["string", "int", "long", "read", "readLine()!!"],
+		"body": "readLine()!!${1:${2|.toInt(),.toLong()|}}$0",
+		"description": "Read"
+	},
+	"Read list": {
+		"prefix": ["list", "read", "readLine()!!"],
+		"body": "readLine()!!.split(' ')${1:.map { it${2:${3|.toInt(),.toLong()|}} \\}}$0",
+		"description": "Read list"
+	}
+	*/
+	"Run length encode for iteralbe": {
+		"prefix": ["runLengthEncode"],
+		"body": [
+			"fun <T> Iterable<T>.runLengthEncode(): List<Pair<T, Int>> {",
+			"\tval result = ArrayList<Pair<T, Int>>()",
+			"\tval iterator = iterator()",
+			"\tif (!iterator.hasNext()) return result",
+			"\tvar previousElement = iterator.next()",
+			"\tvar count = 1",
+			"\twhile (iterator.hasNext()) {",
+			"\t\tval element = iterator.next()",
+			"\t\tif (element == previousElement) count++",
+			"\t\telse {",
+			"\t\t\tresult.add(Pair(previousElement, count))",
+			"\t\t\tpreviousElement = element",
+			"\t\t\tcount = 1",
+			"\t\t}",
+			"\t}",
+			"\tresult.add(Pair(previousElement, count))",
+			"\treturn result",
+			"}",
+			""
+		],
+		"description": "Run length encode for iteralbe"
+	},
+	"Run length encode for char sequence": {
+		"prefix": ["runLengthEncode"],
+		"body": [
+			"fun CharSequence.runLengthEncode(): List<Pair<Char, Int>> {",
+			"\tval result = ArrayList<Pair<Char, Int>>()",
+			"\tif (isEmpty()) return result",
+			"\tvar previousElement = this[0]",
+			"\tvar count = 1",
+			"\t\tfor (i in 1..lastIndex) {",
+			"\t\tval element = this[i]",
+			"\t\tif (element == previousElement) count++",
+			"\t\telse {",
+			"\t\t\tresult.add(Pair(previousElement, count))",
+			"\t\t\tpreviousElement = element",
+			"\t\t\tcount = 1",
+			"\t\t}",
+			"\t}",
+			"\tresult.add(Pair(previousElement, count))",
+			"\treturn result",
+			"}",
+			""
+		],
+		"description": "Run length encode for char sequence"
+	},
+	"Run length decode": {
+		"prefix": ["runLengthDecode"],
+		"body": [
+			"fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {",
+			"\tval result = ArrayList<T>()",
+			"\tfor (element in this) for (i in 0 until element.second) result.add(element.first)",
+			"\treturn result",
+			"}",
+			""
+		],
+		"description": "Run length decode"
+	},
+	"Combinations for iterable": {
+		"prefix": ["combinations"],
+		"body": [
+			"// 未完成",
+			"fun <T> Iterable<T>.combinations(r: Int = count()): List<List<T>> {",
+			"\tval result = ArrayList<List<T>>()",
+			"\tval n = count()",
+			"\tif (r > n || r <= 0) return result",
+			"\tval indices = IntArray(r) { it }",
+			"\tresult.add(indices.map { elementAt(it) })",
+			"\twhile (true) {",
+			"\t\tval i = (0 until r).findLast { indices[it] != it + n - r }",
+			"\t\tif (i == null) return result",
+			"\t\tindices[i]++",
+			"\t\tfor (j in i + 1 until r) indices[j] = indices[j - 1] + 1",
+			"\t\tresult.add(indices.map { elementAt(it) })",
+			"\t}",
+			"}",
+			""
+		],
+		"description": "Combinations for iterable"
+	},
+	"Combinations for char sequence": {
+		"prefix": ["combinations"],
+		"body": [
+			"// 未完成",
+			"\tfun CharSequence.combinations(r: Int = count()): List<List<Char>> {",
+			"\tval result = ArrayList<List<Char>>()",
+			"\tval n = count()",
+			"\tif (r > n || r <= 0) return result",
+			"\tval indices = IntArray(r) { it }",
+			"\tresult.add(indices.map { elementAt(it) })",
+			"\twhile (true) {",
+			"\t\tval i = (0 until r).findLast { indices[it] != it + n - r }",
+			"\t\tif (i == null) return result",
+			"\t\tindices[i]++",
+			"\t\tfor (j in i + 1 until r) indices[j] = indices[j - 1] + 1",
+			"\t\tresult.add(indices.map { elementAt(it) })",
+			"\t}",
+			"}",
+			""
+		],
+		"description": "Combinations for char sequence"
+	},
+	"Permutations for iterable": {
+		"prefix": ["permutations"],
+		"body": [
+			"// 未完成",
+			"\tfun <T> Iterable<T>.permutations(r: Int = count()): List<List<T>> {",
+			"\tval result = ArrayList<List<T>>()",
+			"\tval n = count()",
+			"\tif (r > n || r <= 0) return result",
+			"\tval indices = IntArray(n) { it }",
+			"\tval cycles = IntArray(r) { n - it }",
+			"\tresult.add(indices.take(r).map { elementAt(it) })",
+			"\t\twhile (true) {",
+			"\t\t\tfor (i in (0 until r).reversed()) {",
+			"\t\t\tcycles[i]--",
+			"\t\t\tif (cycles[i] == 0) {",
+			"\t\t\t\tif (cycles[0] == 0) return result",
+			"\t\t\t\tindices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }",
+			"\t\t\t\tcycles[i] = n - i",
+			"\t\t\t}",
+			"\t\t\telse {",
+			"\t\t\t\tval j = cycles[i]",
+			"\t\t\t\tindices[n - j] = indices[i].also { indices[i] = indices[n - j] }",
+			"\t\t\t\tresult.add(indices.take(r).map { elementAt(it) })",
+			"\t\t\t\tbreak",
+			"\t\t\t}",
+			"\t\t}",
+			"\t}",
+			"}",
+			""
+		],
+		"description": "Permutations for iterable"
+	},
+	"Permutations for char sequence": {
+		"prefix": ["permutations"],
+		"body": [
+			"// 未完成",
+			"\tfun CharSequence.permutations(r: Int = count()): List<List<Char>> {",
+			"\tval result = ArrayList<List<Char>>()",
+			"\tval n = count()",
+			"\tif (r > n || r <= 0) return result",
+			"\tval indices = IntArray(n) { it }",
+			"\tval cycles = IntArray(r) { n - it }",
+			"\tresult.add(indices.take(r).map { elementAt(it) })",
+			"\twhile (true) {",
+			"\t\tfor (i in (0 until r).reversed()) {",
+			"\t\t\tcycles[i]--",
+			"\t\t\tif (cycles[i] == 0) {",
+			"\t\t\t\tif (cycles[0] == 0) return result",
+			"\t\t\t\tindices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }",
+			"\t\t\t\tcycles[i] = n - i",
+			"\t\t\t}",
+			"\t\t\telse {",
+			"\t\t\t\tval j = cycles[i]",
+			"\t\t\t\tindices[n - j] = indices[i].also { indices[i] = indices[n - j] }",
+			"\t\t\t\tresult.add(indices.take(r).map { elementAt(it) })",
+			"\t\t\t\tbreak",
+			"\t\t\t}",
+			"\t\t}",
+			"\t}",
+			"}",
+			""
+		],
+		"description": "Permutations for char sequence"
+	},
+	"Union find": {
+		"prefix": ["UnionFind"],
+		"body": [
+			"class UnionFind(val n: Int) {",
+			"\tval parents = IntArray(n) { -1 } // 親の番号 (-1で初期化)",
+			"\tvar groups = n // 集合の個数",
+			"\t// 木の根を求める",
+			"\tfun findRoot(x: Int): Int {",
+			"\t\tif (parents[x] < 0) return x // 根",
+			"\t\telse {",
+			"\t\t\tparents[x] = findRoot(parents[x]) // 経路圧縮",
+			"\t\t\treturn parents[x]",
+			"\t\t}",
+			"\t}",
+			"\t// xとyが同じ集合に属するか否か",
+			"\tfun same(x: Int, y: Int): Boolean {",
+			"\t\treturn findRoot(x) == findRoot(y)",
+			"\t}",
+			"\t// xとyの属する集合を併合",
+			"\tfun unite(x: Int, y: Int) {",
+			"\t\tvar xRoot = findRoot(x)",
+			"\t\tvar yRoot = findRoot(y)",
+			"\t\tif (xRoot == yRoot) return",
+			"\t\tif (xRoot > yRoot) { // yの属する集合のほうが大きかったら",
+			"\t\t\tval tmp = xRoot",
+			"\t\t\txRoot = yRoot",
+			"\t\t\tyRoot = tmp",
+			"\t\t}",
+			"\t\tparents[xRoot] += parents[yRoot]",
+			"\t\tparents[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)",
+			"\t\tgroups--",
+			"\t}",
+			"\tfun size(): Int {",
+			"\t\treturn n",
+			"\t}",
+			"\tfun sizeOf(x: Int): Int {",
+			"\t\treturn -parents[findRoot(x)]",
+			"\t}",
+			"\tfun groupCount(): Int {",
+			"\t\treturn groups",
+			"\t}",
+			"}",
+			""
+		],
+		"description": "Union find"
+	},
+	"Segment tree": {
+		"prefix": ["SegmentTree"],
+		"body": [
+			"class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T, T) -> T) {",
+			"\tval node: MutableList<T> // How to use Array<T>?",
+			"\tinit {",
+			"\t\tvar nodeSize = 1",
+			"\t\twhile (nodeSize < size) nodeSize = nodeSize.shl(1)",
+			"\t\tnode = MutableList<T>(nodeSize.shl(1)) { identity }",
+			"\t}",
+			"\tconstructor(elements: Iterable<T>, identity: T, combine: (T, T) -> T) : this(elements.count(), identity, combine) {",
+			"\t\tfor ((index, element) in elements.withIndex()) node[index + size] = element",
+			"\t\tfor (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) ",
+			"\t}",
+			"\tconstructor(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T) : this(size, identity, combine) {",
+			"\t\trepeat(size) { index -> node[index + size] = init(index) }",
+			"\t\tfor (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) ",
+			"\t}",
+			"\toperator fun get(index: Int): T {",
+			"\t\tcheckElementIndex(index)",
+			"\t\treturn node[index + size]",
+			"\t}",
+			"\tfun updata(index: Int, value: T): T {",
+			"\t\tcheckElementIndex(index)",
+			"\t\tvar count = index + size",
+			"\t\tnode[count] = value",
+			"\t\twhile (count > 1) {",
+			"\t\t\tcount = count.shr(1)",
+			"\t\t\tnode[count] = combine(node[count.shl(1).or(0)], node[count.shl(1).or(1)])",
+			"\t\t}",
+			"\t\treturn value",
+			"\t}",
+			"\tfun query(fromIndex: Int, toIndex: Int): T {",
+			"\t\tcheckRangeIndexes(fromIndex, toIndex)",
+			"\t\tvar left = fromIndex + size",
+			"\t\tvar right = toIndex + size",
+			"\t\tvar leftVal = identity",
+			"\t\tvar rightVal = identity",
+			"\t\twhile (left < right) {",
+			"\t\t\tif (left.and(1) == 1) leftVal = combine(leftVal, node[left++])",
+			"\t\t\tif (right.and(1) == 1) rightVal = combine(node[--right], rightVal)",
+			"\t\t\tleft = left.shr(1)",
+			"\t\t\tright = right.shr(1)",
+			"\t\t}",
+			"\t\treturn combine(leftVal, rightVal)",
+			"\t}",
+			"\tprivate fun checkElementIndex(index: Int) {",
+			"\t\tif (index < 0 || index >= size) {",
+			"\t\t\tthrow IndexOutOfBoundsException(\"index: $index, size: $size\")",
+			"\t\t}",
+			"\t}",
+			"\tprivate fun checkRangeIndexes(fromIndex: Int, toIndex: Int) {",
+			"\t\tif (fromIndex < 0 || toIndex > size) {",
+			"\t\t\tthrow IndexOutOfBoundsException(\"fromIndex: $fromIndex, toIndex: $toIndex, size: $size\")",
+			"\t\t}",
+			"\t\tif (fromIndex > toIndex) {",
+			"\t\t\tthrow IllegalArgumentException(\"fromIndex: $fromIndex > toIndex: $toIndex\")",
+			"\t\t}",
+			"\t}",
+			"}",
+			"fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {",
+			"\treturn SegmentTree(this, identity, combine)",
+			"}",
+			""
+		]
+	}
+}
