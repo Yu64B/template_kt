@@ -53,9 +53,9 @@ fun <T> Iterable<T>.runLengthEncode(): List<Pair<T, Int>> {
 fun CharSequence.runLengthEncode(): List<Pair<Char, Int>> {
     val result = ArrayList<Pair<Char, Int>>()
     if (isEmpty()) return result
-    var previousElement = this[0]
+    var previousElement = first()
     var count = 1
-    for (i in 1..lastIndex) {
+    for (i in 1 .. lastIndex) {
         val element = this[i]
         if (element == previousElement) count++
         else {
@@ -111,10 +111,10 @@ fun <T> Iterable<T>.permutations(r: Int = count()): List<List<T>> {
     val cycles = IntArray(r) { n - it }
     result.add(indices.take(r).map { elementAt(it) })
     while (true) {
-        for (i in (0 until r).reversed()) {
+        for (i in r - 1 downTo 0) {
             cycles[i]--
             if (cycles[i] == 0) {
-                if (cycles[0] == 0) return result
+                if (cycles.first() == 0) return result
                 indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
                 cycles[i] = n - i
             }
@@ -136,10 +136,10 @@ fun CharSequence.permutations(r: Int = count()): List<List<Char>> {
     val cycles = IntArray(r) { n - it }
     result.add(indices.take(r).map { elementAt(it) })
     while (true) {
-        for (i in (0 until r).reversed()) {
+        for (i in r - 1 downTo 0) {
             cycles[i]--
             if (cycles[i] == 0) {
-                if (cycles[0] == 0) return result
+                if (cycles.first() == 0) return result
                 indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
                 cycles[i] = n - i
             }
@@ -197,26 +197,28 @@ class UnionFind(val n: Int) {
 }
 class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T, T) -> T) {
     val node: MutableList<T> // How to use Array<T>?
+    val nodeSize: Int
     init {
-        var nodeSize = 1
-        while (nodeSize < size) nodeSize = nodeSize.shl(1)
+        var tmpNodeSize = 1
+        while (tmpNodeSize < size) tmpNodeSize = tmpNodeSize.shl(1)
+        nodeSize = tmpNodeSize
         node = MutableList<T>(nodeSize.shl(1)) { identity }
     }
     constructor(elements: Iterable<T>, identity: T, combine: (T, T) -> T) : this(elements.count(), identity, combine) {
-        for ((index, element) in elements.withIndex()) node[index + size] = element
-        for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
+        for ((index, element) in elements.withIndex()) node[index + nodeSize] = element
+        for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
     constructor(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T) : this(size, identity, combine) {
-        repeat(size) { index -> node[index + size] = init(index) }
-        for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
+        repeat(size) { index -> node[index + nodeSize] = init(index) }
+        for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
     operator fun get(index: Int): T {
         checkElementIndex(index)
-        return node[index + size]
+        return node[index + nodeSize]
     }
     fun updata(index: Int, value: T): T {
         checkElementIndex(index)
-        var count = index + size
+        var count = index + nodeSize
         node[count] = value
         while (count > 1) {
             count = count.shr(1)
@@ -226,8 +228,8 @@ class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T
     }
     fun query(fromIndex: Int, toIndex: Int): T {
         checkRangeIndexes(fromIndex, toIndex)
-        var left = fromIndex + size
-        var right = toIndex + size
+        var left = fromIndex + nodeSize
+        var right = toIndex + nodeSize
         var leftVal = identity
         var rightVal = identity
         while (left < right) {
@@ -237,6 +239,9 @@ class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T
             right = right.shr(1)
         }
         return combine(leftVal, rightVal)
+    }
+    fun toList(): List<T> {
+        return node.subList(nodeSize, nodeSize + size).toList()
     }
     private fun checkElementIndex(index: Int) {
         if (index < 0 || index >= size) {
