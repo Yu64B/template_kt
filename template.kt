@@ -199,62 +199,34 @@ class UnionFind(val n: Int) {
 class SegmentTree<T> constructor(override val size: Int, val identity: T, val combine: (T, T) -> T) : AbstractList<T>() {
     private val node: MutableList<T> // How to use Array<T>?
     // private val node = MutableList(size.shl(1)) { identity }
-    private val subNode: MutableList<T>
-    // private val subNode = node.subList(size, size.shl(1))
     private val nodeSize: Int
     init {
         var tmpNodeSize = 1
         while (tmpNodeSize < size) tmpNodeSize = tmpNodeSize.shl(1)
         nodeSize = tmpNodeSize
         node = MutableList(nodeSize.shl(1)) { identity }
-        subNode = node.subList(nodeSize, nodeSize + size)
     }
     constructor(elements: Iterable<T>, identity: T, combine: (T, T) -> T) : this(elements.count(), identity, combine) {
-        for ((index, element) in elements.withIndex()) node[index + nodeSize] = element
-        // for ((index, element) in elements.withIndex()) node[index + size] = element
+        for ((index, element) in elements.withIndex()) node[nodeSize + index] = element
+        // for ((index, element) in elements.withIndex()) node[size + index] = element
         for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
         // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
     constructor(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T) : this(size, identity, combine) {
-        repeat(size) { index -> node[index + nodeSize] = init(index) }
-        // repeat(size) { index -> node[index + size] = init(index) }
+        repeat(size) { index -> node[nodeSize + index] = init(index) }
+        // repeat(size) { index -> node[size + index] = init(index) }
         for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
         // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
-    // override fun contains(element: T): Boolean {
-    //     return subNode.contains(element)
-    // }
-    // override fun containsAll(elements: Collection<T>): Boolean {
-    //     return subNode.containsAll(elements)
-    // }
     override operator fun get(index: Int): T {
-        return subNode.get(index)
+        checkElementIndex(index, size)
+        return node[nodeSize + index]
+        // return node[size + index]
     }
-    // override fun indexOf(element: T): Int {
-    //     return subNode.indexOf(element)
-    // }
-    // override fun isEmpty(): Boolean {
-    //     return subNode.isEmpty()
-    // }
-    // override operator fun iterator(): Iterator<T> {
-    //     return subNode.iterator()
-    // }
-    // override fun lastIndexOf(element: T): Int {
-    //     return subNode.lastIndexOf(element)
-    // }
-    // override fun listIterator(): ListIterator<T> {
-    //     return subNode.listIterator()
-    // }
-    // override fun listIterator(index: Int): ListIterator<T> {
-    //     return subNode.listIterator(index)
-    // }
-    // override fun subList(fromIndex: Int, toIndex: Int): List<T> {
-    //     return subNode.subList(fromIndex, toIndex)
-    // }
-    fun updata(index: Int, value: T): T {
-        checkElementIndex(index)
-        var count = index + nodeSize
-        // var count = index + size
+    fun update(index: Int, value: T): T {
+        checkElementIndex(index, size)
+        var count = nodeSize + index
+        // var count = size + index
         node[count] = value
         while (count > 1) {
             count = count.shr(1)
@@ -263,11 +235,11 @@ class SegmentTree<T> constructor(override val size: Int, val identity: T, val co
         return value
     }
     fun query(fromIndex: Int, toIndex: Int): T {
-        checkRangeIndexes(fromIndex, toIndex)
-        var left = fromIndex + nodeSize
-        // var left = fromIndex + size
-        var right = toIndex + nodeSize
-        // var right = toIndex + size
+        checkRangeIndexes(fromIndex, toIndex, size)
+        var left = nodeSize + fromIndex
+        // var left = size + fromIndex
+        var right = nodeSize + toIndex
+        // var right = size + toIndex
         var leftVal = identity
         var rightVal = identity
         while (left < right) {
@@ -278,12 +250,12 @@ class SegmentTree<T> constructor(override val size: Int, val identity: T, val co
         }
         return combine(leftVal, rightVal)
     }
-    private fun checkElementIndex(index: Int) {
+    internal fun checkElementIndex(index: Int, size: Int) {
         if (index < 0 || index >= size) {
             throw IndexOutOfBoundsException("index: $index, size: $size")
         }
     }
-    private fun checkRangeIndexes(fromIndex: Int, toIndex: Int) {
+    internal fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
         if (fromIndex < 0 || toIndex > size) {
             throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
         }
@@ -321,7 +293,7 @@ class XorShiftRandom : Random() {
     internal fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
     internal fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { "bitCount: $bitCount, must be in range 0..32" }
 }
-class RandomizedSet<E>() : MutableSet<E> {
+class RandomizedSet<E>() : AbstractMutableSet<E>() {
     private val indexes = mutableMapOf<E, Int>()
     private val values = mutableListOf<E>()
     private val random = XorShiftRandom()
@@ -335,44 +307,44 @@ class RandomizedSet<E>() : MutableSet<E> {
         indexes[element] = values.lastIndex
         return true
     }
-    override fun addAll(elements: Collection<E>): Boolean {
-        return elements.fold(false) { result, element -> add(element) || result }
-    }
-    override fun clear() {
-        indexes.clear()
-        values.clear()
-    }
-    override fun contains(element: E): Boolean {
-        return indexes.contains(element)
-    }
-    override fun containsAll(elements: Collection<E>): Boolean {
-        return elements.all { contains(it) }
-    }
-    override fun isEmpty(): Boolean {
-        return indexes.isEmpty()
-    }
+    // override fun addAll(elements: Collection<E>): Boolean {
+    //     return elements.fold(false) { result, element -> add(element) || result }
+    // }
+    // override fun clear() {
+    //     indexes.clear()
+    //     values.clear()
+    // }
+    // override fun contains(element: E): Boolean {
+    //     return indexes.contains(element)
+    // }
+    // override fun containsAll(elements: Collection<E>): Boolean {
+    //     return elements.all { contains(it) }
+    // }
+    // override fun isEmpty(): Boolean {
+    //     return indexes.isEmpty()
+    // }
     override fun iterator(): MutableIterator<E> {
         return indexes.keys.iterator()
     }
-    override fun remove(element: E): Boolean {
-        val index = indexes[element]
-        if (index == null) {
-            return false
-        }
-        val lastElement = values[values.lastIndex]
-        values[index] = lastElement
-        indexes[lastElement] = index
-        values.removeAt(values.lastIndex)
-        indexes.remove(element)
-        return true
-    }
-    override fun removeAll(elements: Collection<E>): Boolean {
-        return elements.fold(false) { result, element -> remove(element) || result }
-    }
-    override fun retainAll(elements: Collection<E>): Boolean {
-        val set = elements.toSet()
-        return removeAll(indexes.keys.filter { !set.contains(it) })
-    }
+    // override fun remove(element: E): Boolean {
+    //     val index = indexes[element]
+    //     if (index == null) {
+    //         return false
+    //     }
+    //     val lastElement = values[values.lastIndex]
+    //     values[index] = lastElement
+    //     indexes[lastElement] = index
+    //     values.removeAt(values.lastIndex)
+    //     indexes.remove(element)
+    //     return true
+    // }
+    // override fun removeAll(elements: Collection<E>): Boolean {
+    //     return elements.fold(false) { result, element -> remove(element) || result }
+    // }
+    // override fun retainAll(elements: Collection<E>): Boolean {
+    //     val set = elements.toSet()
+    //     return removeAll(indexes.keys.filter { !set.contains(it) })
+    // }
     fun getRandom(): E {
         val randomIndex = random.nextInt(size)
         return values[randomIndex]
