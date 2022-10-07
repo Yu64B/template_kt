@@ -30,6 +30,7 @@
 			"\twriter.close()",
 			"}",
 			"fun PrintWriter.solve() {",
+			"\tval reader = System.`in`.bufferedReader()",
 			"\t$0",
 			"}",
 			""
@@ -38,43 +39,43 @@
 	},
 	"Read string": {
 		"prefix": ["string", "read", "readLine()!!"],
-		"body": "readLine()!!",
+		"body": "reader.readLine()!!",
 		"description": "Read string"
 	},
 	"Read int": {
 		"prefix": ["int", "read", "readLine()!!"],
-		"body": "readLine()!!.toInt()",
+		"body": "reader.readLine()!!.toInt()",
 		"description": "Read int"
 	},
 	"Read long": {
 		"prefix": ["long", "read", "readLine()!!"],
-		"body": "readLine()!!.toLong()",
+		"body": "reader.readLine()!!.toLong()",
 		"description": "Read long"
 	},
 	"Read string list": {
 		"prefix": ["stringlist", "read", "readLine()!!"],
-		"body": "readLine()!!.split(' ')",
+		"body": "reader.readLine()!!.split(' ')",
 		"description": "Read string list"
 	},
 	"Read int list": {
 		"prefix": ["intlist", "read", "readLine()!!"],
-		"body": "readLine()!!.split(' ').map { it.toInt() }",
+		"body": "reader.readLine()!!.split(' ').map { it.toInt() }",
 		"description": "Read int list"
 	},
 	"Read long list": {
 		"prefix": ["longlist", "read", "readLine()!!"],
-		"body": "readLine()!!.split(' ').map { it.toLong() }",
+		"body": "reader.readLine()!!.split(' ').map { it.toLong() }",
 		"description": "Read long list"
 	},
 	/*
 	"Read": {
 		"prefix": ["string", "int", "long", "read", "readLine()!!"],
-		"body": "readLine()!!${1:${2|.toInt(),.toLong()|}}$0",
+		"body": "reader.readLine()!!${1:${2|.toInt(),.toLong()|}}$0",
 		"description": "Read"
 	},
 	"Read list": {
 		"prefix": ["list", "read", "readLine()!!"],
-		"body": "readLine()!!.split(' ')${1:.map { it${2:${3|.toInt(),.toLong()|}} \\}}$0",
+		"body": "reader.readLine()!!.split(' ')${1:.map { it${2:${3|.toInt(),.toLong()|}} \\}}$0",
 		"description": "Read list"
 	}
 	*/
@@ -317,7 +318,7 @@
 			"\t\tcheckElementIndex(index)",
 			"\t\treturn node[index + nodeSize]",
 			"\t}",
-			"\tfun updata(index: Int, value: T): T {",
+			"\tfun update(index: Int, value: T): T {",
 			"\t\tcheckElementIndex(index)",
 			"\t\tvar count = index + nodeSize",
 			"\t\tnode[count] = value",

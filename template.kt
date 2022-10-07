@@ -1,3 +1,4 @@
+import kotlin.random.Random
 val DEBUG = true
 
 fun main() {
@@ -195,30 +196,65 @@ class UnionFind(val n: Int) {
         return groups
     }
 }
-class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T, T) -> T) {
-    val node: MutableList<T> // How to use Array<T>?
-    val nodeSize: Int
+class SegmentTree<T> constructor(override val size: Int, val identity: T, val combine: (T, T) -> T) : AbstractList<T>() {
+    private val node: MutableList<T> // How to use Array<T>?
+    // private val node = MutableList(size.shl(1)) { identity }
+    private val subNode: MutableList<T>
+    // private val subNode = node.subList(size, size.shl(1))
+    private val nodeSize: Int
     init {
         var tmpNodeSize = 1
         while (tmpNodeSize < size) tmpNodeSize = tmpNodeSize.shl(1)
         nodeSize = tmpNodeSize
-        node = MutableList<T>(nodeSize.shl(1)) { identity }
+        node = MutableList(nodeSize.shl(1)) { identity }
+        subNode = node.subList(nodeSize, nodeSize + size)
     }
     constructor(elements: Iterable<T>, identity: T, combine: (T, T) -> T) : this(elements.count(), identity, combine) {
         for ((index, element) in elements.withIndex()) node[index + nodeSize] = element
-        for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
+        // for ((index, element) in elements.withIndex()) node[index + size] = element
+        for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
+        // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
     constructor(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T) : this(size, identity, combine) {
         repeat(size) { index -> node[index + nodeSize] = init(index) }
-        for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
+        // repeat(size) { index -> node[index + size] = init(index) }
+        for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
+        // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
-    operator fun get(index: Int): T {
-        checkElementIndex(index)
-        return node[index + nodeSize]
+    // override fun contains(element: T): Boolean {
+    //     return subNode.contains(element)
+    // }
+    // override fun containsAll(elements: Collection<T>): Boolean {
+    //     return subNode.containsAll(elements)
+    // }
+    override operator fun get(index: Int): T {
+        return subNode.get(index)
     }
+    // override fun indexOf(element: T): Int {
+    //     return subNode.indexOf(element)
+    // }
+    // override fun isEmpty(): Boolean {
+    //     return subNode.isEmpty()
+    // }
+    // override operator fun iterator(): Iterator<T> {
+    //     return subNode.iterator()
+    // }
+    // override fun lastIndexOf(element: T): Int {
+    //     return subNode.lastIndexOf(element)
+    // }
+    // override fun listIterator(): ListIterator<T> {
+    //     return subNode.listIterator()
+    // }
+    // override fun listIterator(index: Int): ListIterator<T> {
+    //     return subNode.listIterator(index)
+    // }
+    // override fun subList(fromIndex: Int, toIndex: Int): List<T> {
+    //     return subNode.subList(fromIndex, toIndex)
+    // }
     fun updata(index: Int, value: T): T {
         checkElementIndex(index)
         var count = index + nodeSize
+        // var count = index + size
         node[count] = value
         while (count > 1) {
             count = count.shr(1)
@@ -229,7 +265,9 @@ class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T
     fun query(fromIndex: Int, toIndex: Int): T {
         checkRangeIndexes(fromIndex, toIndex)
         var left = fromIndex + nodeSize
+        // var left = fromIndex + size
         var right = toIndex + nodeSize
+        // var right = toIndex + size
         var leftVal = identity
         var rightVal = identity
         while (left < right) {
@@ -239,9 +277,6 @@ class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T
             right = right.shr(1)
         }
         return combine(leftVal, rightVal)
-    }
-    fun toList(): List<T> {
-        return node.subList(nodeSize, nodeSize + size).toList()
     }
     private fun checkElementIndex(index: Int) {
         if (index < 0 || index >= size) {
@@ -259,4 +294,90 @@ class SegmentTree<T> constructor(val size: Int, val identity: T, val combine: (T
 }
 fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
     return SegmentTree(this, identity, combine)
+}
+class XorShiftRandom : Random() {
+    private var x = 2463534242U
+    override fun nextBits(bitCount: Int): Int {
+        checkBitCount(bitCount)
+        x = x xor x.shl(13)
+        x = x xor x.shr(17)
+        x = x xor x.shl(5)
+        return if (bitCount == 32) x.toInt() else (x and (1U.shl(bitCount) - 1U)).toInt()
+    }
+    override fun nextInt(): Int = nextBits(32)
+    override fun nextInt(until: Int): Int = nextInt(0, until)
+    override fun nextInt(from: Int, until: Int): Int {
+        checkRangeBounds(from, until)
+        return (nextInt().toUInt() % (until - from).toUInt()).toInt() + from
+    }
+    override fun nextLong(): Long = nextInt().toLong().shl(32) + nextInt()
+    override fun nextLong(until: Long): Long = nextLong(0, until)
+    override fun nextLong(from: Long, until: Long): Long {
+        checkRangeBounds(from, until)
+        return (nextLong().toULong() % (until - from).toULong()).toLong() + from
+    }
+    internal fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }
+    internal fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }
+    internal fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
+    internal fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { "bitCount: $bitCount, must be in range 0..32" }
+}
+class RandomizedSet<E>() : MutableSet<E> {
+    private val indexes = mutableMapOf<E, Int>()
+    private val values = mutableListOf<E>()
+    private val random = XorShiftRandom()
+    override val size: Int
+        get() = indexes.size
+    override fun add(element: E): Boolean {
+        if (indexes.contains(element)) {
+            return false
+        }
+        values.add(element)
+        indexes[element] = values.lastIndex
+        return true
+    }
+    override fun addAll(elements: Collection<E>): Boolean {
+        return elements.fold(false) { result, element -> add(element) || result }
+    }
+    override fun clear() {
+        indexes.clear()
+        values.clear()
+    }
+    override fun contains(element: E): Boolean {
+        return indexes.contains(element)
+    }
+    override fun containsAll(elements: Collection<E>): Boolean {
+        return elements.all { contains(it) }
+    }
+    override fun isEmpty(): Boolean {
+        return indexes.isEmpty()
+    }
+    override fun iterator(): MutableIterator<E> {
+        return indexes.keys.iterator()
+    }
+    override fun remove(element: E): Boolean {
+        val index = indexes[element]
+        if (index == null) {
+            return false
+        }
+        val lastElement = values[values.lastIndex]
+        values[index] = lastElement
+        indexes[lastElement] = index
+        values.removeAt(values.lastIndex)
+        indexes.remove(element)
+        return true
+    }
+    override fun removeAll(elements: Collection<E>): Boolean {
+        return elements.fold(false) { result, element -> remove(element) || result }
+    }
+    override fun retainAll(elements: Collection<E>): Boolean {
+        val set = elements.toSet()
+        return removeAll(indexes.keys.filter { !set.contains(it) })
+    }
+    fun getRandom(): E {
+        val randomIndex = random.nextInt(size)
+        return values[randomIndex]
+    }
+}
+fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
+    return RandomizedSet<T>().also { for (element in this) it.add(element) }
 }
