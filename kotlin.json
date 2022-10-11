@@ -67,18 +67,6 @@
 		"body": "reader.readLine()!!.split(' ').map { it.toLong() }",
 		"description": "Read long list"
 	},
-	/*
-	"Read": {
-		"prefix": ["string", "int", "long", "read", "readLine()!!"],
-		"body": "reader.readLine()!!${1:${2|.toInt(),.toLong()|}}$0",
-		"description": "Read"
-	},
-	"Read list": {
-		"prefix": ["list", "read", "readLine()!!"],
-		"body": "reader.readLine()!!.split(' ')${1:.map { it${2:${3|.toInt(),.toLong()|}} \\}}$0",
-		"description": "Read list"
-	}
-	*/
 	"Run length encode for iteralbe": {
 		"prefix": ["runLengthEncode"],
 		"body": [
@@ -380,8 +368,8 @@
 		"prefix": ["XorShiftRandom"],
 		"body": [
 			"// import kotlin.random.Random",
-			"class XorShiftRandom : Random() {",
-			"\tprivate var x = 2463534242U",
+			"class XorShiftRandom(seed: Int = 0) : Random() {",
+			"\tprivate var x = if (seed == 0) 2463534242U else seed.toUInt()",
 			"\toverride fun nextBits(bitCount: Int): Int {",
 			"\t\tcheckBitCount(bitCount)",
 			"\t\tx = x xor x.shl(13)",

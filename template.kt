@@ -297,8 +297,8 @@ fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTre
 operator fun Point.component1(): Int = x
 operator fun Point.component2(): Int = y
 // import kotlin.random.Random
-class XorShiftRandom : Random() {
-    private var x = 2463534242U
+class XorShiftRandom(seed: Int = 0) : Random() {
+    private var x = if (seed == 0) 2463534242U else seed.toUInt()
     override fun nextBits(bitCount: Int): Int {
         checkBitCount(bitCount)
         x = x xor x.shl(13)
