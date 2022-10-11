@@ -375,5 +375,39 @@
 			""
 		],
 		"description": "Point"
+	},
+	"Xor shift random": {
+		"prefix": ["XorShiftRandom"],
+		"body": [
+			"// import kotlin.random.Random",
+			"class XorShiftRandom : Random() {",
+			"\tprivate var x = 2463534242U",
+			"\toverride fun nextBits(bitCount: Int): Int {",
+			"\t\tcheckBitCount(bitCount)",
+			"\t\tx = x xor x.shl(13)",
+			"\t\tx = x xor x.shr(17)",
+			"\t\tx = x xor x.shl(5)",
+			"\t\treturn if (bitCount == 32) x.toInt() else (x and (1U.shl(bitCount) - 1U)).toInt()",
+			"\t}",
+			"\toverride fun nextInt(): Int = nextBits(32)",
+			"\toverride fun nextInt(until: Int): Int = nextInt(0, until)",
+			"\toverride fun nextInt(from: Int, until: Int): Int {",
+			"\t\tcheckRangeBounds(from, until)",
+			"\t\treturn (nextInt().toUInt() % (until - from).toUInt()).toInt() + from",
+			"\t}",
+			"\toverride fun nextLong(): Long = nextInt().toLong().shl(32) + nextInt()",
+			"\toverride fun nextLong(until: Long): Long = nextLong(0, until)",
+			"\toverride fun nextLong(from: Long, until: Long): Long {",
+			"\t\tcheckRangeBounds(from, until)",
+			"\t\treturn (nextLong().toULong() % (until - from).toULong()).toLong() + from",
+			"\t}",
+			"\tprivate fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }",
+			"\tprivate fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }",
+			"\tprivate fun boundsErrorMessage(from: Any, until: Any) = \"Random range is empty: [\\$from, \\$until).\"",
+			"\tprivate fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { \"bitCount: \\$bitCount, must be in range 0..32\" }",
+			"}",
+			""
+		],
+		"description": "Xor shift random"
 	}
 }

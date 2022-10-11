@@ -1,5 +1,5 @@
-import kotlin.random.Random
 import java.awt.Point
+import kotlin.random.Random
 val DEBUG = true
 
 fun main() {
@@ -293,6 +293,10 @@ class SegmentTree<T> constructor(override val size: Int, val identity: T, val co
 fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
     return SegmentTree(this, identity, combine)
 }
+// import java.awt.Point
+operator fun Point.component1(): Int = x
+operator fun Point.component2(): Int = y
+// import kotlin.random.Random
 class XorShiftRandom : Random() {
     private var x = 2463534242U
     override fun nextBits(bitCount: Int): Int {
@@ -384,5 +388,3 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
 fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
     return RandomizedSet<T>().also { for (element in this) it.add(element) }
 }
-operator fun Point.component1(): Int = x
-operator fun Point.component2(): Int = y
