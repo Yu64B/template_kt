@@ -143,7 +143,7 @@
 	"Combinations for iterable": {
 		"prefix": ["combinations"],
 		"body": [
-			"// 未完成",
+			"// 動作未確認",
 			"fun <T> Iterable<T>.combinations(r: Int = count()): List<List<T>> {",
 			"\tval result = ArrayList<List<T>>()",
 			"\tval n = count()",
@@ -165,7 +165,7 @@
 	"Combinations for char sequence": {
 		"prefix": ["combinations"],
 		"body": [
-			"// 未完成",
+			"// 動作未確認",
 			"\tfun CharSequence.combinations(r: Int = count()): List<List<Char>> {",
 			"\tval result = ArrayList<List<Char>>()",
 			"\tval n = count()",
@@ -187,7 +187,7 @@
 	"Permutations for iterable": {
 		"prefix": ["permutations"],
 		"body": [
-			"// 未完成",
+			"// 動作未確認",
 			"\tfun <T> Iterable<T>.permutations(r: Int = count()): List<List<T>> {",
 			"\tval result = ArrayList<List<T>>()",
 			"\tval n = count()",
@@ -219,7 +219,7 @@
 	"Permutations for char sequence": {
 		"prefix": ["permutations"],
 		"body": [
-			"// 未完成",
+			"// 動作未確認",
 			"\tfun CharSequence.permutations(r: Int = count()): List<List<Char>> {",
 			"\tval result = ArrayList<List<Char>>()",
 			"\tval n = count()",

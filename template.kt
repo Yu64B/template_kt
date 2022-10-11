@@ -4,9 +4,33 @@ val DEBUG = true
 fun main() {
     val list = listOf(29, 18, 16, 19, 13, 12, 17, 27)
     val seg = list.toSegmentTree(0) { a, b -> Math.max(a, b) }
-    println("a ${seg.query(1, 7)}")
-    println("b ${seg.query(1, 5)}")
-    println("c ${seg.query(2, 7)}")
+    println("a ${seg.query(0, seg.size)}")
+    println("b ${seg.query(1, seg.size)}")
+    println("c ${seg.query(1, seg.size - 1)}")
+    val rand = (0 until 100000).toRandomizedSet()
+    for (i in 0 until 100000) {
+        if (rand.contains(i)) {
+            rand.remove(i)
+        }
+    }
+    rand.addAll(0 until 100000)
+    rand.removeAll(99998 downTo 1)
+    rand.addAll(0 until 100000)
+    rand.retainAll(1 .. 99998)
+    rand.clear()
+    for (i in 0 until 100000) {
+        rand.clear()
+        rand.add(i)
+    }
+    println(rand.getRandom())
+    rand.addAll(99999 downTo 0)
+    rand.removeAll(-1 .. 100000)
+    rand.addAll(0 until 100000)
+    val itr = rand.iterator()
+    while (itr.hasNext()) {
+        itr.remove()
+    }
+    mutableMapOf<Int, Int>(Pair(1, 1), Pair(2, 2)).also { it.iterator().remove() }.let { println(it.iterator().next()) }
 }
 
 fun debug(message: Any?) { if (DEBUG) print(message) }
@@ -73,7 +97,7 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
     for (element in this) for (i in 0 until element.second) result.add(element.first)
     return result
 }
-// 未完成
+// 動作未確認
 fun <T> Iterable<T>.combinations(r: Int = count()): List<List<T>> {
     val result = ArrayList<List<T>>()
     val n = count()
@@ -88,7 +112,7 @@ fun <T> Iterable<T>.combinations(r: Int = count()): List<List<T>> {
         result.add(indices.map { elementAt(it) })
     }
 }
-// 未完成
+// 動作未確認
 fun CharSequence.combinations(r: Int = count()): List<List<Char>> {
     val result = ArrayList<List<Char>>()
     val n = count()
@@ -103,7 +127,7 @@ fun CharSequence.combinations(r: Int = count()): List<List<Char>> {
         result.add(indices.map { elementAt(it) })
     }
 }
-// 未完成
+// 動作未確認
 fun <T> Iterable<T>.permutations(r: Int = count()): List<List<T>> {
     val result = ArrayList<List<T>>()
     val n = count()
@@ -128,7 +152,7 @@ fun <T> Iterable<T>.permutations(r: Int = count()): List<List<T>> {
         }
     }
 }
-// 未完成
+// 動作未確認
 fun CharSequence.permutations(r: Int = count()): List<List<Char>> {
     val result = ArrayList<List<Char>>()
     val n = count()
@@ -250,12 +274,12 @@ class SegmentTree<T> constructor(override val size: Int, val identity: T, val co
         }
         return combine(leftVal, rightVal)
     }
-    internal fun checkElementIndex(index: Int, size: Int) {
+    private fun checkElementIndex(index: Int, size: Int) {
         if (index < 0 || index >= size) {
             throw IndexOutOfBoundsException("index: $index, size: $size")
         }
     }
-    internal fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
+    private fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
         if (fromIndex < 0 || toIndex > size) {
             throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
         }
@@ -288,10 +312,10 @@ class XorShiftRandom : Random() {
         checkRangeBounds(from, until)
         return (nextLong().toULong() % (until - from).toULong()).toLong() + from
     }
-    internal fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }
-    internal fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }
-    internal fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
-    internal fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { "bitCount: $bitCount, must be in range 0..32" }
+    private fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }
+    private fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }
+    private fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
+    private fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { "bitCount: $bitCount, must be in range 0..32" }
 }
 class RandomizedSet<E>() : AbstractMutableSet<E>() {
     private val indexes = mutableMapOf<E, Int>()
@@ -314,30 +338,46 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
     //     indexes.clear()
     //     values.clear()
     // }
-    // override fun contains(element: E): Boolean {
-    //     return indexes.contains(element)
-    // }
+    override fun contains(element: E): Boolean {
+        return indexes.contains(element)
+    }
     // override fun containsAll(elements: Collection<E>): Boolean {
     //     return elements.all { contains(it) }
     // }
     // override fun isEmpty(): Boolean {
     //     return indexes.isEmpty()
     // }
-    override fun iterator(): MutableIterator<E> {
-        return indexes.keys.iterator()
-    }
-    // override fun remove(element: E): Boolean {
-    //     val index = indexes[element]
-    //     if (index == null) {
-    //         return false
-    //     }
-    //     val lastElement = values[values.lastIndex]
-    //     values[index] = lastElement
-    //     indexes[lastElement] = index
-    //     values.removeAt(values.lastIndex)
-    //     indexes.remove(element)
-    //     return true
+    // override fun iterator(): MutableIterator<E> {
+    //     return indexes.keys.iterator()
     // }
+    override fun iterator(): MutableIterator<E> {
+        val iterator = indexes.keys.iterator()
+        var next: E? = null
+        return object : MutableIterator<E> {
+            override fun hasNext(): Boolean {
+                return iterator.hasNext()
+            }
+            override fun next(): E {
+                return iterator.next().also { next = it }
+            }
+            // 動作未確認
+            override fun remove() {
+                val index = indexes[next]!!
+                iterator.remove()
+                removeFromList(index)
+                next = null
+            }
+        }
+    }
+    override fun remove(element: E): Boolean {
+        val index = indexes[element]
+        if (index == null) {
+            return false
+        }
+        removeFromList(index)
+        indexes.remove(element)
+        return true
+    }
     // override fun removeAll(elements: Collection<E>): Boolean {
     //     return elements.fold(false) { result, element -> remove(element) || result }
     // }
@@ -345,6 +385,12 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
     //     val set = elements.toSet()
     //     return removeAll(indexes.keys.filter { !set.contains(it) })
     // }
+    private fun removeFromList(index: Int) {
+        val lastElement = values[values.lastIndex]
+        values[index] = lastElement
+        indexes[lastElement] = index
+        values.removeAt(values.lastIndex)
+    }
     fun getRandom(): E {
         val randomIndex = random.nextInt(size)
         return values[randomIndex]
