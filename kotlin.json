@@ -363,6 +363,17 @@
 			"\treturn SegmentTree(this, identity, combine)",
 			"}",
 			""
-		]
+		],
+		"description": "Segment tree"
+	},
+	"Point": {
+		"prefix": ["Point"],
+		"body": [
+			"// import java.awt.Point",
+			"operator fun Point.component1(): Int = x",
+			"operator fun Point.component2(): Int = y",
+			""
+		],
+		"description": "Point"
 	}
 }

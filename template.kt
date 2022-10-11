@@ -1,4 +1,5 @@
 import kotlin.random.Random
+import java.awt.Point
 val DEBUG = true
 
 fun main() {
@@ -28,9 +29,10 @@ fun main() {
     rand.addAll(0 until 100000)
     val itr = rand.iterator()
     while (itr.hasNext()) {
+        itr.next()
         itr.remove()
     }
-    mutableMapOf<Int, Int>(Pair(1, 1), Pair(2, 2)).also { it.iterator().remove() }.let { println(it.iterator().next()) }
+    // mutableMapOf<Int, Int>(Pair(1, 1), Pair(2, 2)).also { it.iterator().remove() }.let { println(it.iterator().next()) }
 }
 
 fun debug(message: Any?) { if (DEBUG) print(message) }
@@ -317,10 +319,12 @@ class XorShiftRandom : Random() {
     private fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
     private fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { "bitCount: $bitCount, must be in range 0..32" }
 }
+// 未完成
 class RandomizedSet<E>() : AbstractMutableSet<E>() {
     private val indexes = mutableMapOf<E, Int>()
     private val values = mutableListOf<E>()
     private val random = XorShiftRandom()
+    private val valuesSet = mutableSetOf<E>() // for iterator function
     override val size: Int
         get() = indexes.size
     override fun add(element: E): Boolean {
@@ -329,43 +333,30 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
         }
         values.add(element)
         indexes[element] = values.lastIndex
+        valuesSet.add(element)
         return true
     }
-    // override fun addAll(elements: Collection<E>): Boolean {
-    //     return elements.fold(false) { result, element -> add(element) || result }
-    // }
-    // override fun clear() {
-    //     indexes.clear()
-    //     values.clear()
-    // }
     override fun contains(element: E): Boolean {
         return indexes.contains(element)
     }
-    // override fun containsAll(elements: Collection<E>): Boolean {
-    //     return elements.all { contains(it) }
-    // }
-    // override fun isEmpty(): Boolean {
-    //     return indexes.isEmpty()
-    // }
-    // override fun iterator(): MutableIterator<E> {
-    //     return indexes.keys.iterator()
-    // }
     override fun iterator(): MutableIterator<E> {
-        val iterator = indexes.keys.iterator()
-        var next: E? = null
+        // val iterator = indexes.keys.iterator()
+        val iterator = valuesSet.iterator()
+        var nextValue: E? = null
         return object : MutableIterator<E> {
             override fun hasNext(): Boolean {
                 return iterator.hasNext()
             }
             override fun next(): E {
-                return iterator.next().also { next = it }
+                return iterator.next().also { nextValue = it }
             }
             // 動作未確認
             override fun remove() {
-                val index = indexes[next]!!
+                val index = indexes[nextValue]
                 iterator.remove()
-                removeFromList(index)
-                next = null
+                removeFromList(index!!)
+                indexes.remove(nextValue)
+                nextValue = null
             }
         }
     }
@@ -374,17 +365,11 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
         if (index == null) {
             return false
         }
+        valuesSet.remove(element)
         removeFromList(index)
         indexes.remove(element)
         return true
     }
-    // override fun removeAll(elements: Collection<E>): Boolean {
-    //     return elements.fold(false) { result, element -> remove(element) || result }
-    // }
-    // override fun retainAll(elements: Collection<E>): Boolean {
-    //     val set = elements.toSet()
-    //     return removeAll(indexes.keys.filter { !set.contains(it) })
-    // }
     private fun removeFromList(index: Int) {
         val lastElement = values[values.lastIndex]
         values[index] = lastElement
@@ -399,3 +384,5 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
 fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
     return RandomizedSet<T>().also { for (element in this) it.add(element) }
 }
+operator fun Point.component1(): Int = x
+operator fun Point.component2(): Int = y
