@@ -357,7 +357,7 @@
 	"Point": {
 		"prefix": ["Point"],
 		"body": [
-			"// import java.awt.Point",
+			"${1:import java.awt.Point}",
 			"operator fun Point.component1(): Int = x",
 			"operator fun Point.component2(): Int = y",
 			""
@@ -367,7 +367,7 @@
 	"Xor shift random": {
 		"prefix": ["XorShiftRandom"],
 		"body": [
-			"// import kotlin.random.Random",
+			"${1:import kotlin.random.Random}",
 			"class XorShiftRandom(seed: Int = 0) : Random() {",
 			"\tprivate var x = if (seed == 0) 2463534242U else seed.toUInt()",
 			"\toverride fun nextBits(bitCount: Int): Int {",
