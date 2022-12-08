@@ -394,14 +394,20 @@ fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTre
 operator fun Point.component1(): Int = x
 operator fun Point.component2(): Int = y
 // import kotlin.random.Random
-class XorShiftRandom(seed: Int = 0) : Random() {
-    private var x = if (seed == 0) 2463534242U else seed.toUInt()
+class XorShiftRandom : Random {
+    private var x: UInt
+    constructor() {
+        x = 2463534242U
+    }
+    constructor(seed: Int) {
+        x = seed.toUInt()
+        require(x != 0U) { "Initial state must have non-zero element." }
+    }
     override fun nextBits(bitCount: Int): Int {
-        checkBitCount(bitCount)
         x = x xor x.shl(13)
         x = x xor x.shr(17)
         x = x xor x.shl(5)
-        return if (bitCount == 32) x.toInt() else (x and (1U.shl(bitCount) - 1U)).toInt()
+        return if (bitCount <= 0) 0 else (x and (2U.shl((bitCount - 1) and 31) - 1U)).toInt()
     }
     override fun nextInt(): Int = nextBits(32)
     override fun nextInt(until: Int): Int = nextInt(0, until)
@@ -418,13 +424,11 @@ class XorShiftRandom(seed: Int = 0) : Random() {
     private fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }
     private fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }
     private fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
-    private fun checkBitCount(bitCount: Int) = require(0 <= bitCount && bitCount <= 32) { "bitCount: $bitCount, must be in range 0..32" }
 }
 // 未完成
-class RandomizedSet<E>() : AbstractMutableSet<E>() {
+class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : AbstractMutableSet<E>() {
     private val indexes = mutableMapOf<E, Int>()
     private val values = mutableListOf<E>()
-    private val random = XorShiftRandom()
     private val valuesSet = mutableSetOf<E>() // for iterator function
     override val size: Int
         get() = indexes.size
@@ -485,3 +489,127 @@ class RandomizedSet<E>() : AbstractMutableSet<E>() {
 fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
     return RandomizedSet<T>().also { for (element in this) it.add(element) }
 }
+// fun <T : Comparable<T>> List<T?>.ceilingIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
+//     rangeCheck(size, fromIndex, toIndex)
+// }
+// private fun rangeCheck(size: Int, fromIndex: Int, toIndex: Int) {
+//     when {
+//         fromIndex > toIndex -> throw IllegalArgumentException("fromIndex ($fromIndex) is greater than toIndex ($toIndex).")
+//         fromIndex < 0 -> throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than zero.")
+//         toIndex > size -> throw IndexOutOfBoundsException("toIndex ($toIndex) is greater than size ($size).")
+//     }
+// }
+public fun <T : Comparable<T>> Iterable<T>.maxOrNull(): T? {
+    val iterator = iterator()
+    if (!iterator.hasNext()) return null
+    var max = iterator.next()
+    while (iterator.hasNext()) {
+        val e = iterator.next()
+        if (max < e) max = e
+    }
+    return max
+}
+public fun <T : Comparable<T>> Iterable<T>.minOrNull(): T? {
+    val iterator = iterator()
+    if (!iterator.hasNext()) return null
+    var min = iterator.next()
+    while (iterator.hasNext()) {
+        val e = iterator.next()
+        if (min > e) min = e
+    }
+    return min
+}
+fun <T> List<List<T>>.transposed(): List<List<T>> {
+    require(size > 0) { "The number of rows must be at least 1." }
+    require(this.all { it.size == first().size }) { "All column numbers must match." }
+    return List(first().size) { j -> List(size) { i -> this[i][j] } }
+}
+fun List<List<Long>>.kMeans(k: Int, maxTimes: Int = 1000, random: Random = XorShiftRandom()): List<List<List<Long>>> {
+    require(size > 0) { "The size of elements must be at least 1." }
+    require(this.all { it.size == first().size }) { "The dimension sizes of all elements must match." }
+    require(k > 0) { "k must be at least 1." }
+    val clusters = Array(size) { random.nextInt(k) }
+    val centroids = List(k) { Array(first().size) { 0.0 } }
+    // 高速化のため変数を使いまわす
+    val elementsCounts = Array(k) { 0 }
+    val centroidsSums = List(k) { Array(first().size) { 0L } }
+    for (time in 0 until maxTimes) {
+        // クラスターの重心の更新
+        for (cluster in 0 until k) {
+            elementsCounts[cluster] = 0
+            for (dim in 0 until centroidsSums[cluster].size) {
+                centroidsSums[cluster][dim] = 0
+            }
+        }
+        for (index in 0 until size) {
+            val cluster = clusters[index]
+            elementsCounts[cluster]++
+            for (dim in 0 until this[index].size) {
+                centroidsSums[cluster][dim] += this[index][dim]
+            }
+        }
+        for (cluster in 0 until k) {
+            if (elementsCounts[cluster] != 0) {
+                for (dim in 0 until centroids[cluster].size) {
+                    centroids[cluster][dim] = centroidsSums[cluster][dim].toDouble() / elementsCounts[cluster]
+                }
+            }
+            // クラスターに所属する要素が0のときは、そのクラスターの重心をランダムな要素の座標に一致させる
+            else {
+                val randomIndex = random.nextInt(size)
+                for (dim in 0 until centroids[cluster].size) {
+                    centroids[cluster][dim] = this[randomIndex][dim].toDouble()
+                }
+            }
+        }
+        // 要素の所属の更新
+        var movedCount = 0
+        for (index in 0 until size) {
+            var closestDistance = (this[index] zip centroids[0]).map { Math.abs(it.first - it.second) * Math.abs(it.first - it.second) }.sum()
+            var closestCluster = 0
+            for (cluster in 0 until k) {
+                val distance = (this[index] zip centroids[cluster]).map { Math.abs(it.first - it.second) * Math.abs(it.first - it.second) }.sum()
+                if (distance < closestDistance) {
+                    closestDistance = distance
+                    closestCluster = cluster
+                }
+            }
+            if (closestCluster != clusters[index]) {
+                clusters[index] = closestCluster
+                movedCount++
+            }
+        }
+        if (movedCount == 0) {
+            break
+        }
+    }
+    val results = List(k) { mutableListOf<List<Long>>() }
+    for (index in 0 until size) {
+        val cluster = clusters[index]
+        results[cluster].add(this[index])
+    }
+    return results
+}
+fun primeFactorize(x: Long): List<Pair<Long, Int>> {
+    val result = mutableListOf<Pair<Long, Int>>()
+    var remainingValue = x
+    var primeNumber = 2L
+    while (primeNumber * primeNumber <= remainingValue) {
+        if (remainingValue % primeNumber != 0L) {
+            primeNumber++
+            continue
+        }
+        var count = 0
+        while (remainingValue % primeNumber == 0L) {
+            count++
+            remainingValue /= primeNumber
+        }
+        result.add(Pair(primeNumber, count))
+        primeNumber++
+    }
+    if (remainingValue != 1L) {
+        result.add(Pair(remainingValue, 1))
+    }
+    return result
+}
+fun Long.primeFactorize() = primeFactorize(this)
