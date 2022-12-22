@@ -86,12 +86,12 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
 fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
     require(r >= 0) { "r must be non-negative" }
     val n = count()
-    if (r > n) yield(null)
+    if (r > n) return@sequence
     val indices = IntArray(r) { it }
     yield(indices.map { elementAt(it) })
     while (true) {
         val i = (r - 1 downTo 0).firstOrNull { indices[it] != it + n - r }
-        if (i == null) break
+        if (i == null) return@sequence
         indices[i]++
         for (j in i + 1 until r) indices[j] = indices[j - 1] + 1
         yield(indices.map { elementAt(it) })
@@ -101,12 +101,12 @@ fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
 fun CharSequence.combinations(r: Int = length) = sequence {
     require(r >= 0) { "r must be non-negative" }
     val n = length
-    if (r > n) yield(null)
+    if (r > n) return@sequence
     val indices = IntArray(r) { it }
     yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
     while (true) {
         val i = (r - 1 downTo 0).firstOrNull { indices[it] != it + n - r }
-        if (i == null) break
+        if (i == null) return@sequence
         indices[i]++
         for (j in i + 1 until r) indices[j] = indices[j - 1] + 1
         yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
@@ -116,7 +116,7 @@ fun CharSequence.combinations(r: Int = length) = sequence {
 fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
     require(r >= 0) { "r must be non-negative" }
     val n = count()
-    if (r > n) yield(null)
+    if (r > n) return@sequence
     val indices = IntArray(n) { it }
     val cycles = IntArray(r) { n - it }
     yield(indices.asList().subList(0, r).map { elementAt(it) })
@@ -133,7 +133,7 @@ fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
                 yield(indices.asList().subList(0, r).map { elementAt(it) })
                 break
             }
-            if (i == 0) break
+            if (i == 0) return@sequence
         }
     }
 }
@@ -141,7 +141,7 @@ fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
 fun CharSequence.permutations(r: Int = count()) = sequence {
     require(r >= 0) { "r must be non-negative" }
     val n = length
-    if (r > n) yield(null)
+    if (r > n) return@sequence
     val indices = IntArray(n) { it }
     val cycles = IntArray(r) { n - it }
     yield(StringBuilder(r).also { for (i in indices.asList().subList(0, r)) it.append(get(i)) }.toString())
@@ -158,7 +158,7 @@ fun CharSequence.permutations(r: Int = count()) = sequence {
                 yield(StringBuilder(r).also { for (k in indices.asList().subList(0, r)) it.append(get(k)) }.toString())
                 break
             }
-            if (i == 0) break
+            if (i == 0) return@sequence
         }
     }
 }
