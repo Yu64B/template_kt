@@ -1,40 +1,24 @@
 import java.awt.Point
 import kotlin.random.Random
-val DEBUG = true
-
+import java.io.PrintWriter
 fun main() {
-    val list = listOf(29, 18, 16, 19, 13, 12, 17, 27)
-    val seg = list.toSegmentTree(0) { a, b -> Math.max(a, b) }
-    println("a ${seg.query(0, seg.size)}")
-    println("b ${seg.query(1, seg.size)}")
-    println("c ${seg.query(1, seg.size - 1)}")
-    val rand = (0 until 100000).toRandomizedSet()
-    for (i in 0 until 100000) {
-        if (rand.contains(i)) {
-            rand.remove(i)
-        }
-    }
-    rand.addAll(0 until 100000)
-    rand.removeAll(99998 downTo 1)
-    rand.addAll(0 until 100000)
-    rand.retainAll(1 .. 99998)
-    rand.clear()
-    for (i in 0 until 100000) {
-        rand.clear()
-        rand.add(i)
-    }
-    println(rand.getRandom())
-    rand.addAll(99999 downTo 0)
-    rand.removeAll(-1 .. 100000)
-    rand.addAll(0 until 100000)
-    val itr = rand.iterator()
-    while (itr.hasNext()) {
-        itr.next()
-        itr.remove()
-    }
-    // mutableMapOf<Int, Int>(Pair(1, 1), Pair(2, 2)).also { it.iterator().remove() }.let { println(it.iterator().next()) }
+    var error: Throwable? = null
+    val thread = Thread(null, ::runner, "runner", 128L * 1024 * 1024)
+    thread.setUncaughtExceptionHandler { _, e -> error = e }
+    thread.start()
+    thread.join()
+    error?.let { throw it }
 }
-
+fun runner() {
+    val writer = PrintWriter(System.out, false) // Boolean autoFlush
+    writer.solve()
+    writer.close()
+}
+fun PrintWriter.solve() {
+    val reader = System.`in`.bufferedReader()
+    
+}
+val DEBUG = true
 fun debug(message: Any?) { if (DEBUG) print(message) }
 fun debug(message: Int) { if (DEBUG) print(message) }
 fun debug(message: Long) { if (DEBUG) print(message) }
@@ -58,7 +42,6 @@ fun debugln(message: Float) { if (DEBUG) println(message) }
 fun debugln(message: Double) { if (DEBUG) println(message) }
 fun debugln(message: CharArray) { if (DEBUG) println(message) }
 fun debugln(message: String) { if (DEBUG) println(message) }
-
 fun <T> Iterable<T>.runLengthEncode(): List<Pair<T, Int>> {
     val result = ArrayList<Pair<T, Int>>()
     val iterator = iterator()
@@ -618,7 +601,7 @@ fun primeFactorize(x: Long): List<Pair<Long, Int>> {
     return result
 }
 // fun Long.primeFactorize() = primeFactorize(this)
-class TreeList<T> {
+class MutableMultiSet<T> {
     private class Node<T>(var value: T) {
         var left: Node<T>? = null
         var right: Node<T>? = null
