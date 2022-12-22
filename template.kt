@@ -100,82 +100,82 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
     return result
 }
 // 動作未確認
-fun <T> Iterable<T>.combinations(r: Int = count()): List<List<T>> {
-    val result = ArrayList<List<T>>()
+fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
+    require(r >= 0) { "r must be non-negative" }
     val n = count()
-    if (r > n || r <= 0) return result
+    if (r > n) yield(null)
     val indices = IntArray(r) { it }
-    result.add(indices.map { elementAt(it) })
+    yield(indices.map { elementAt(it) })
     while (true) {
-        val i = (0 until r).findLast { indices[it] != it + n - r }
-        if (i == null) return result
+        val i = (r - 1 downTo 0).firstOrNull { indices[it] != it + n - r }
+        if (i == null) break
         indices[i]++
         for (j in i + 1 until r) indices[j] = indices[j - 1] + 1
-        result.add(indices.map { elementAt(it) })
+        yield(indices.map { elementAt(it) })
     }
 }
 // 動作未確認
-fun CharSequence.combinations(r: Int = count()): List<List<Char>> {
-    val result = ArrayList<List<Char>>()
-    val n = count()
-    if (r > n || r <= 0) return result
+fun CharSequence.combinations(r: Int = length) = sequence {
+    require(r >= 0) { "r must be non-negative" }
+    val n = length
+    if (r > n) yield(null)
     val indices = IntArray(r) { it }
-    result.add(indices.map { elementAt(it) })
+    yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
     while (true) {
-        val i = (0 until r).findLast { indices[it] != it + n - r }
-        if (i == null) return result
+        val i = (r - 1 downTo 0).firstOrNull { indices[it] != it + n - r }
+        if (i == null) break
         indices[i]++
         for (j in i + 1 until r) indices[j] = indices[j - 1] + 1
-        result.add(indices.map { elementAt(it) })
+        yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
     }
 }
 // 動作未確認
-fun <T> Iterable<T>.permutations(r: Int = count()): List<List<T>> {
-    val result = ArrayList<List<T>>()
+fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
+    require(r >= 0) { "r must be non-negative" }
     val n = count()
-    if (r > n || r <= 0) return result
+    if (r > n) yield(null)
     val indices = IntArray(n) { it }
     val cycles = IntArray(r) { n - it }
-    result.add(indices.take(r).map { elementAt(it) })
-    while (true) {
+    yield(indices.asList().subList(0, r).map { elementAt(it) })
+    while (n != 0) {
         for (i in r - 1 downTo 0) {
             cycles[i]--
             if (cycles[i] == 0) {
-                if (cycles.first() == 0) return result
                 indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
                 cycles[i] = n - i
             }
             else {
                 val j = cycles[i]
                 indices[n - j] = indices[i].also { indices[i] = indices[n - j] }
-                result.add(indices.take(r).map { elementAt(it) })
+                yield(indices.asList().subList(0, r).map { elementAt(it) })
                 break
             }
+            if (i == 0) break
         }
     }
 }
 // 動作未確認
-fun CharSequence.permutations(r: Int = count()): List<List<Char>> {
-    val result = ArrayList<List<Char>>()
-    val n = count()
-    if (r > n || r <= 0) return result
+fun CharSequence.permutations(r: Int = count()) = sequence {
+    require(r >= 0) { "r must be non-negative" }
+    val n = length
+    if (r > n) yield(null)
     val indices = IntArray(n) { it }
     val cycles = IntArray(r) { n - it }
-    result.add(indices.take(r).map { elementAt(it) })
-    while (true) {
+    yield(StringBuilder(r).also { for (i in indices.asList().subList(0, r)) it.append(get(i)) }.toString())
+    while (n != 0) {
         for (i in r - 1 downTo 0) {
             cycles[i]--
             if (cycles[i] == 0) {
-                if (cycles.first() == 0) return result
                 indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
                 cycles[i] = n - i
             }
             else {
                 val j = cycles[i]
                 indices[n - j] = indices[i].also { indices[i] = indices[n - j] }
-                result.add(indices.take(r).map { elementAt(it) })
+                yield(StringBuilder(r).also { for (k in indices.asList().subList(0, r)) it.append(get(k)) }.toString())
                 break
             }
+            if (i == 0) break
         }
     }
 }
@@ -521,12 +521,17 @@ public fun <T : Comparable<T>> Iterable<T>.minOrNull(): T? {
 }
 fun <T> List<List<T>>.transposed(): List<List<T>> {
     require(size > 0) { "The number of rows must be at least 1." }
-    require(this.all { it.size == first().size }) { "All column numbers must match." }
+    require(all { it.size == first().size }) { "All column numbers must match." }
     return List(first().size) { j -> List(size) { i -> this[i][j] } }
+}
+fun List<CharSequence>.transposedString(): List<String> {
+    require(size > 0) { "The number of rows must be at least 1." }
+    require(all { it.length == first().length }) { "All column numbers must match." }
+    return List(first().length) { j -> StringBuilder(size).also { for (i in 0 until size) it.append(this[i][j]) }.toString() }
 }
 fun List<List<Long>>.kMeans(k: Int, maxTimes: Int = 1000, random: Random = XorShiftRandom()): List<List<List<Long>>> {
     require(size > 0) { "The size of elements must be at least 1." }
-    require(this.all { it.size == first().size }) { "The dimension sizes of all elements must match." }
+    require(all { it.size == first().size }) { "The dimension sizes of all elements must match." }
     require(k > 0) { "k must be at least 1." }
     val clusters = Array(size) { random.nextInt(k) }
     val centroids = List(k) { Array(first().size) { 0.0 } }
@@ -612,4 +617,44 @@ fun primeFactorize(x: Long): List<Pair<Long, Int>> {
     }
     return result
 }
-fun Long.primeFactorize() = primeFactorize(this)
+// fun Long.primeFactorize() = primeFactorize(this)
+class TreeList<T> {
+    private class Node<T>(var value: T) {
+        var left: Node<T>? = null
+        var right: Node<T>? = null
+        var height = 0
+        var size = 0
+        fun update(): Node<T> {
+            height = Math.max(left!!.height, right!!.height) + 1
+            size = left!!.size + right!!.size + 1
+            return this
+        }
+        fun rotateLeft(): Node<T> {
+            val newRoot = right!!
+            right = newRoot.left
+            newRoot.left = this
+            update()
+            return newRoot.update()
+        }
+        fun rotateRight(): Node<T> {
+            val newRoot = left!!
+            left = newRoot.right
+            newRoot.right = this
+            update()
+            return newRoot.update()
+        }
+        fun calcHeightDiff() = left!!.height - right!!.height
+        fun balance(): Node<T> {
+            val heightDiff = calcHeightDiff()
+            if (heightDiff == 2) {
+                if (left!!.calcHeightDiff() < 0) left = left!!.rotateLeft()
+                return rotateRight()
+            }
+            else if (heightDiff == -2) {
+                if (right!!.calcHeightDiff() > 0) right = right!!.rotateRight()
+                return rotateLeft()
+            }
+            else return update()
+        }
+    }
+}
