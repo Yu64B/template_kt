@@ -16,7 +16,29 @@ fun runner() {
 }
 fun PrintWriter.solve() {
     val reader = System.`in`.bufferedReader()
-    
+    val (H, W) = reader.readLine()!!.split(' ').map { it.toInt() }
+    val Q = reader.readLine()!!.toInt()
+    val queries = List(Q) { reader.readLine()!!.split(' ').map { it.toInt() } }
+    val grids = List(H + 2) { BooleanArray(W + 2) { false } }
+    val uf = List(H + 2) { r -> List(W + 2) { c -> Point(c, r) } }.flatten().toMutableUnionFind()
+    val dxs = listOf(0, 0, -1, 1)
+    val dys = listOf(-1, 1, 0, 0)
+    for (q in queries) {
+        val t = q[0]
+        if (t == 1) {
+            val (r, c) = q.drop(1)
+            grids[r][c] = true
+            for ((dx, dy) in dxs zip dys) {
+                if (grids[r + dy][c + dx]) {
+                    uf.unite(Point(r, c), Point(r + dy, c + dx))
+                }
+            }
+        }
+        else {
+            val (ra, ca, rb, cb) = q.drop(1)
+            println(if (grids[ra][ca] && grids[rb][cb] && uf.same(Point(ra, ca), Point(rb, cb))) "Yes" else "No")
+        }
+    }
 }
 val DEBUG = true
 fun debug(message: Any?) { if (DEBUG) print(message) }
@@ -205,8 +227,8 @@ class UnionFind(val n: Int) {
         return groups
     }
 }
-class SegmentTree<T> constructor(override val size: Int, private val identity: T, private val combine: (T, T) -> T) : AbstractList<T>() {
-    private val node: MutableList<T> // How to use Array<T>?
+class SegmentTree<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : AbstractList<E>() {
+    private val node: MutableList<E> // How to use Array<E>?
     // private val node = MutableList(size.shl(1)) { identity }
     private val nodeSize: Int
     init {
@@ -215,24 +237,24 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
         nodeSize = tmpNodeSize
         node = MutableList(nodeSize.shl(1)) { identity }
     }
-    constructor(elements: Iterable<T>, identity: T, combine: (T, T) -> T) : this(elements.count(), identity, combine) {
+    constructor(elements: Iterable<E>, identity: E, combine: (E, E) -> E) : this(elements.count(), identity, combine) {
         for ((index, element) in elements.withIndex()) node[nodeSize + index] = element
         // for ((index, element) in elements.withIndex()) node[size + index] = element
         for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
         // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
-    constructor(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T) : this(size, identity, combine) {
+    constructor(size: Int, init: (Int) -> E, identity: E, combine: (E, E) -> E) : this(size, identity, combine) {
         repeat(size) { index -> node[nodeSize + index] = init(index) }
         // repeat(size) { index -> node[size + index] = init(index) }
         for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
         // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
     }
-    override fun get(index: Int): T {
+    override fun get(index: Int): E {
         checkElementIndex(index, size)
         return node[nodeSize + index]
         // return node[size + index]
     }
-    fun set(index: Int, value: T) {
+    fun set(index: Int, value: E) {
         checkElementIndex(index, size)
         var count = nodeSize + index
         // var count = size + index
@@ -242,7 +264,7 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
             node[count] = combine(node[count.shl(1).or(0)], node[count.shl(1).or(1)])
         }
     }
-    fun query(fromIndex: Int, toIndex: Int): T {
+    fun query(fromIndex: Int, toIndex: Int): E {
         checkRangeIndexes(fromIndex, toIndex, size)
         var left = nodeSize + fromIndex
         // var left = size + fromIndex
@@ -272,28 +294,28 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
         }
     }
 }
-// interface SegmentTree<T> : List<T> {
-//     abstract operator fun set(index: Int, value: T)
-//     abstract fun query(fromIndex: Int, toIndex: Int): T
-//     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<T>
+// interface SegmentTree<E> : List<E> {
+//     abstract operator fun set(index: Int, value: E)
+//     abstract fun query(fromIndex: Int, toIndex: Int): E
+//     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E>
 // }
-// abstract class AbstractSegmentTree<T> : AbstractList<T>(), SegmentTree<T> {
-//     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<T> = SubList(this, fromIndex, toIndex)
-//     private class SubList<T>(private val list: SegmentTree<T>, private val fromIndex: Int, toIndex: Int) : AbstractSegmentTree<T>() {
+// abstract class AbstractSegmentTree<E> : AbstractList<E>(), SegmentTree<E> {
+//     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> = SubList(this, fromIndex, toIndex)
+//     private class SubList<E>(private val list: SegmentTree<E>, private val fromIndex: Int, toIndex: Int) : AbstractSegmentTree<E>() {
 //         private var _size = 0
 //         init {
 //             checkRangeIndexes(fromIndex, toIndex, list.size)
 //             this._size = toIndex - fromIndex
 //         }
-//         override fun get(index: Int): T {
+//         override fun get(index: Int): E {
 //             checkElementIndex(index, _size)
 //             return list[fromIndex + index]
 //         }
-//         override fun set(index: Int, value: T) {
+//         override fun set(index: Int, value: E) {
 //             checkElementIndex(index, _size)
 //             list.set(fromIndex + index, value)
 //         }
-//         override fun query(fromIndex: Int, toIndex: Int): T {
+//         override fun query(fromIndex: Int, toIndex: Int): E {
 //             checkRangeIndexes(fromIndex, toIndex, _size)
 //             return query(this.fromIndex + fromIndex, this.fromIndex + toIndex)
 //         }
@@ -313,8 +335,8 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
 //         }
 //     }
 // }
-// class ListSegmentTree<T> constructor(override val size: Int, private val identity: T, private val combine: (T, T) -> T) : AbstractSegmentTree<T>() {
-//     private val node: MutableList<T> // How to use Array<T>?
+// class ImplementationSegmentTree<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : AbstractSegmentTree<E>() {
+//     private val node: MutableList<E> // How to use Array<E>?
 //     // private val node = MutableList(size.shl(1)) { identity }
 //     private val nodeSize: Int
 //     init {
@@ -323,24 +345,24 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
 //         nodeSize = tmpNodeSize
 //         node = MutableList(nodeSize.shl(1)) { identity }
 //     }
-//     constructor(elements: Iterable<T>, identity: T, combine: (T, T) -> T) : this(elements.count(), identity, combine) {
+//     constructor(elements: Iterable<E>, identity: E, combine: (E, E) -> E) : this(elements.count(), identity, combine) {
 //         for ((index, element) in elements.withIndex()) node[nodeSize + index] = element
 //         // for ((index, element) in elements.withIndex()) node[size + index] = element
 //         for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
 //         // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
 //     }
-//     constructor(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T) : this(size, identity, combine) {
+//     constructor(size: Int, init: (Int) -> E, identity: E, combine: (E, E) -> E) : this(size, identity, combine) {
 //         repeat(size) { index -> node[nodeSize + index] = init(index) }
 //         // repeat(size) { index -> node[size + index] = init(index) }
 //         for (index in nodeSize - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)])
 //         // for (index in size - 1 downTo 1) node[index] = combine(node[index.shl(1).or(0)], node[index.shl(1).or(1)]) 
 //     }
-//     override fun get(index: Int): T {
+//     override fun get(index: Int): E {
 //         checkElementIndex(index, size)
 //         return node[nodeSize + index]
 //         // return node[size + index]
 //     }
-//     override fun set(index: Int, value: T) {
+//     override fun set(index: Int, value: E) {
 //         checkElementIndex(index, size)
 //         var count = nodeSize + index
 //         // var count = size + index
@@ -350,7 +372,7 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
 //             node[count] = combine(node[count.shl(1).or(0)], node[count.shl(1).or(1)])
 //         }
 //     }
-//     override fun query(fromIndex: Int, toIndex: Int): T {
+//     override fun query(fromIndex: Int, toIndex: Int): E {
 //         checkRangeIndexes(fromIndex, toIndex, size)
 //         var left = nodeSize + fromIndex
 //         // var left = size + fromIndex
@@ -367,9 +389,9 @@ class SegmentTree<T> constructor(override val size: Int, private val identity: T
 //         return combine(leftVal, rightVal)
 //     }
 // }
-// fun <T> SegmentTree(size: Int, identity: T, combine: (T, T) -> T): SegmentTree<T> = ListSegmentTree(size, identity, combine)
-// fun <T> SegmentTree(elements: Iterable<T>, identity: T, combine: (T, T) -> T): SegmentTree<T> = ListSegmentTree(elements, identity, combine)
-// fun <T> SegmentTree(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T): SegmentTree<T> = ListSegmentTree(size, init, identity, combine)
+// fun <T> SegmentTree(size: Int, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(size, identity, combine)
+// fun <T> SegmentTree(elements: Iterable<T>, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(elements, identity, combine)
+// fun <T> SegmentTree(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(size, init, identity, combine)
 fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
     return SegmentTree(this, identity, combine)
 }
@@ -470,10 +492,24 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
     }
 }
 fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
-    return RandomizedSet<T>().also { for (element in this) it.add(element) }
+    return RandomizedSet<T>().also { for (item in this) it.add(item) }
 }
 // fun <T : Comparable<T>> List<T?>.ceilingIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
 //     rangeCheck(size, fromIndex, toIndex)
+//     if (compareValues(get(toIndex - 1), element) < 0) return -1
+//     var low = fromIndex
+//     var high = toIndex
+//     while (low < high) {
+//         val mid = (low + high).ushr(1)
+//         val midVal = get(mid)
+//         if (compareValues(midVal, element) < 0) {
+//             low = mid + 1
+//         }
+//         else {
+//             high = mid
+//         }
+//     }
+//     return low
 // }
 // private fun rangeCheck(size: Int, fromIndex: Int, toIndex: Int) {
 //     when {
@@ -640,4 +676,81 @@ class MutableMultiSet<T> {
             else return update()
         }
     }
+}
+class MutableUnionFind<E> : AbstractMutableSet<E>() {
+    val map = mutableMapOf<E, MutableSet<E>>()
+    val groups = mutableMapOf<E, MutableSet<E>>()
+    override val size: Int
+        get() = map.size
+    override fun add(element: E): Boolean {
+        if (map.containsKey(element)) {
+            return false
+        }
+        map[element] = HashSet<E>(2).apply { add(element) }
+        groups[element] = HashSet<E>(2).apply { add(element) }
+        return true
+    }
+    override fun contains(element: E): Boolean {
+        return map.containsKey(element)
+    }
+    override fun iterator(): MutableIterator<E> {
+        return object : MutableIterator<E> {
+            val iterator = map.entries.iterator()
+            var nextEntry: MutableMap.MutableEntry<E, MutableSet<E>>? = null
+            override fun hasNext(): Boolean {
+                return iterator.hasNext()
+            }
+            override fun next(): E {
+                return iterator.next().also { nextEntry = it }.key
+            }
+            override fun remove() {
+                val element = nextEntry!!.key
+                val set = nextEntry!!.value
+                set.remove(element)
+                if (groups.remove(element) != null && set.isNotEmpty()) {
+                    groups[set.first()] = set
+                }
+                iterator.remove()
+                nextEntry = null
+            }
+        }
+    }
+    override fun remove(element: E): Boolean {
+        val set = map[element]
+        if (set == null) {
+            return false
+        }
+        set.remove(element)
+        if (groups.remove(element) != null && set.isNotEmpty()) {
+            groups[set.first()] = set
+        }
+        map.remove(element)
+        return true
+    }
+    fun same(x: E, y: E): Boolean {
+        val xSet = map[x] ?: throw NoSuchElementException("Collection contains no element matching the x.")
+        val ySet = map[y] ?: throw NoSuchElementException("Collection contains no element matching the y.")
+        return xSet === ySet
+    }
+    fun unite(x: E, y: E): Boolean {
+        val xSet = map[x] ?: throw NoSuchElementException("Collection contains no element matching the x.")
+        val ySet = map[y] ?: throw NoSuchElementException("Collection contains no element matching the y.")
+        if (xSet === ySet) {
+            return false
+        }
+        val smallSet = if (xSet.size > ySet.size) ySet else xSet
+        val largeSet = if (xSet.size > ySet.size) xSet else ySet
+        val iterator = smallSet.iterator()
+        while (iterator.hasNext()) {
+            val element = iterator.next()
+            largeSet.add(element)
+            map[element] = largeSet
+            groups.remove(element)
+            iterator.remove()
+        }
+        return true
+    }
+}
+fun <T> Iterable<T>.toMutableUnionFind(): MutableUnionFind<T> {
+    return MutableUnionFind<T>().also { for (item in this) it.add(item) }
 }
