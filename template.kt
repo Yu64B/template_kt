@@ -494,30 +494,6 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
 fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
     return RandomizedSet<T>().also { for (item in this) it.add(item) }
 }
-// fun <T : Comparable<T>> List<T?>.ceilingIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
-//     rangeCheck(size, fromIndex, toIndex)
-//     if (compareValues(get(toIndex - 1), element) < 0) return -1
-//     var low = fromIndex
-//     var high = toIndex
-//     while (low < high) {
-//         val mid = (low + high).ushr(1)
-//         val midVal = get(mid)
-//         if (compareValues(midVal, element) < 0) {
-//             low = mid + 1
-//         }
-//         else {
-//             high = mid
-//         }
-//     }
-//     return low
-// }
-// private fun rangeCheck(size: Int, fromIndex: Int, toIndex: Int) {
-//     when {
-//         fromIndex > toIndex -> throw IllegalArgumentException("fromIndex ($fromIndex) is greater than toIndex ($toIndex).")
-//         fromIndex < 0 -> throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than zero.")
-//         toIndex > size -> throw IndexOutOfBoundsException("toIndex ($toIndex) is greater than size ($size).")
-//     }
-// }
 public fun <T : Comparable<T>> Iterable<T>.maxOrNull(): T? {
     val iterator = iterator()
     if (!iterator.hasNext()) return null
@@ -753,4 +729,87 @@ class MutableUnionFind<E> : AbstractMutableSet<E>() {
 }
 fun <T> Iterable<T>.toMutableUnionFind(): MutableUnionFind<T> {
     return MutableUnionFind<T>().also { for (item in this) it.add(item) }
+}
+fun binarySearch(from: Int, to: Int, predicate: (Int) -> Boolean): Int? {
+    if (from == to) {
+        return null
+    }
+    var ok = from
+    var ng = to
+    while (Math.abs(ng - ok) > 1) {
+        val mid = (ok + ng).ushr(1)
+        if (predicate(mid)) {
+            ok = mid
+        }
+        else {
+            ng = mid
+        }
+    }
+    return if (predicate(ok)) ok else null
+}
+fun binarySearch(from: Long, to: Long, predicate: (Long) -> Boolean): Long? {
+    if (from == to) {
+        return null
+    }
+    var ok = from
+    var ng = to
+    while (Math.abs(ng - ok) > 1) {
+        val mid = (ok + ng).ushr(1)
+        if (predicate(mid)) {
+            ok = mid
+        }
+        else {
+            ng = mid
+        }
+    }
+    return if (predicate(ok)) ok else null
+}
+fun <T> List<T>.binarySearch(fromIndex: Int = 0, toIndex: Int = size, predicate: (T) -> Boolean): Int {
+    rangeCheck(size, fromIndex, toIndex)
+    if (fromIndex == toIndex) {
+        return -1
+    }
+    var ok = fromIndex
+    var ng = toIndex
+    while (Math.abs(ng - ok) > 1) {
+        val mid = (ok + ng).ushr(1)
+        if (predicate(get(mid))) {
+            ok = mid
+        }
+        else {
+            ng = mid
+        }
+    }
+    return if (predicate(get(ok))) ok else -1
+}
+fun <T : Comparable<T>> List<T?>.ceilingIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
+    rangeCheck(size, fromIndex, toIndex)
+    if (fromIndex == 0 && toIndex == size) {
+        return asReversed().binarySearch { compareValues(it, element) >= 0 }
+    }
+    else {
+        return subList(fromIndex, toIndex).asReversed().binarySearch { compareValues(it, element) >= 0 }
+    }
+}
+fun <T : Comparable<T>> List<T?>.floorIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
+    return binarySearch(fromIndex, toIndex) { compareValues(it, element) <= 0 }
+}
+fun <T : Comparable<T>> List<T?>.higherIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
+    rangeCheck(size, fromIndex, toIndex)
+    if (fromIndex == 0 && toIndex == size) {
+        return asReversed().binarySearch { compareValues(it, element) > 0 }
+    }
+    else {
+        return subList(fromIndex, toIndex).asReversed().binarySearch { compareValues(it, element) > 0 }
+    }
+}
+fun <T : Comparable<T>> List<T?>.lowerIndexOf(element: T?, fromIndex: Int = 0, toIndex: Int = size): Int {
+    return binarySearch(fromIndex, toIndex) { compareValues(it, element) < 0 }
+}
+private fun rangeCheck(size: Int, fromIndex: Int, toIndex: Int) {
+    when {
+        fromIndex > toIndex -> throw IllegalArgumentException("fromIndex ($fromIndex) is greater than toIndex ($toIndex).")
+        fromIndex < 0 -> throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than zero.")
+        toIndex > size -> throw IndexOutOfBoundsException("toIndex ($toIndex) is greater than size ($size).")
+    }
 }
