@@ -1,5 +1,11 @@
 import java.awt.Point
 import kotlin.random.Random
+import java.lang.ProcessBuilder.Redirect
+import java.util.concurrent.TimeUnit
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.BufferedReader
+import java.util.PriorityQueue
 import java.io.PrintWriter
 fun main() {
     var error: Throwable? = null
@@ -16,29 +22,45 @@ fun runner() {
 }
 fun PrintWriter.solve() {
     val reader = System.`in`.bufferedReader()
-    val (H, W) = reader.readLine()!!.split(' ').map { it.toInt() }
-    val Q = reader.readLine()!!.toInt()
-    val queries = List(Q) { reader.readLine()!!.split(' ').map { it.toInt() } }
-    val grids = List(H + 2) { BooleanArray(W + 2) { false } }
-    val uf = List(H + 2) { r -> List(W + 2) { c -> Point(c, r) } }.flatten().toMutableUnionFind()
-    val dxs = listOf(0, 0, -1, 1)
-    val dys = listOf(-1, 1, 0, 0)
-    for (q in queries) {
-        val t = q[0]
-        if (t == 1) {
-            val (r, c) = q.drop(1)
-            grids[r][c] = true
-            for ((dx, dy) in dxs zip dys) {
-                if (grids[r + dy][c + dx]) {
-                    uf.unite(Point(r, c), Point(r + dy, c + dx))
-                }
-            }
-        }
-        else {
-            val (ra, ca, rb, cb) = q.drop(1)
-            println(if (grids[ra][ca] && grids[rb][cb] && uf.same(Point(ra, ca), Point(rb, cb))) "Yes" else "No")
-        }
+    // val (H, W) = reader.readLine()!!.split(' ').map { it.toInt() }
+    // val Q = reader.readLine()!!.toInt()
+    // val queries = List(Q) { reader.readLine()!!.split(' ').map { it.toInt() } }
+    // val grids = List(H + 2) { BooleanArray(W + 2) { false } }
+    // val uf = List(H + 2) { r -> List(W + 2) { c -> Point(c, r) } }.flatten().toMutableUnionFind()
+    // val dxs = listOf(0, 0, -1, 1)
+    // val dys = listOf(-1, 1, 0, 0)
+    // for (q in queries) {
+    //     val t = q[0]
+    //     if (t == 1) {
+    //         val (r, c) = q.drop(1)
+    //         grids[r][c] = true
+    //         for ((dx, dy) in dxs zip dys) {
+    //             if (grids[r + dy][c + dx]) {
+    //                 uf.unite(Point(r, c), Point(r + dy, c + dx))
+    //             }
+    //         }
+    //     }
+    //     else {
+    //         val (ra, ca, rb, cb) = q.drop(1)
+    //         println(if (grids[ra][ca] && grids[rb][cb] && uf.same(Point(ra, ca), Point(rb, cb))) "Yes" else "No")
+    //     }
+    // }
+    val pb = ProcessBuilder("echo", "a").apply {
+        redirectOutput(Redirect.PIPE)
+        // redirectOutput(System.out)
     }
+    val process = pb.start()
+    val os = process.getOutputStream()
+    val writer = PrintWriter(os, true)
+    writer.println("1+1")
+    writer.println("aaa")
+    writer.println("exit()")
+    val _is = process.getInputStream()
+    val isr = InputStreamReader(_is)
+    val br = BufferedReader(isr)
+    println(br.readLine())
+    process.waitFor(2, TimeUnit.SECONDS)
+    println(br.readLine())
 }
 val DEBUG = true
 fun debug(message: Any?) { if (DEBUG) print(message) }
@@ -106,7 +128,7 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
 }
 // 動作未確認
 fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
-    require(r >= 0) { "r must be non-negative" }
+    require(r >= 0) { "r must be non-negative." }
     val n = count()
     if (r > n) return@sequence
     val indices = IntArray(r) { it }
@@ -121,7 +143,7 @@ fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
 }
 // 動作未確認
 fun CharSequence.combinations(r: Int = length) = sequence {
-    require(r >= 0) { "r must be non-negative" }
+    require(r >= 0) { "r must be non-negative." }
     val n = length
     if (r > n) return@sequence
     val indices = IntArray(r) { it }
@@ -136,7 +158,7 @@ fun CharSequence.combinations(r: Int = length) = sequence {
 }
 // 動作未確認
 fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
-    require(r >= 0) { "r must be non-negative" }
+    require(r >= 0) { "r must be non-negative." }
     val n = count()
     if (r > n) return@sequence
     val indices = IntArray(n) { it }
@@ -161,7 +183,7 @@ fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
 }
 // 動作未確認
 fun CharSequence.permutations(r: Int = count()) = sequence {
-    require(r >= 0) { "r must be non-negative" }
+    require(r >= 0) { "r must be non-negative." }
     val n = length
     if (r > n) return@sequence
     val indices = IntArray(n) { it }
@@ -187,6 +209,9 @@ fun CharSequence.permutations(r: Int = count()) = sequence {
 val iterableComparator = Comparator<Iterable<Comparable<*>>> { a, b ->
     for ((aElement, bElement) in a zip b) if (aElement != bElement) return@Comparator compareValues(aElement, bElement)
     compareValues(a.count(), b.count())
+}
+val pairComparator = Comparator<Pair<Comparable<*>, Comparable<*>>> { a, b -> 
+    if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
 }
 class UnionFind(val n: Int) {
     val parents = IntArray(n) { -1 } // 親の番号 (-1で初期化)
@@ -225,6 +250,23 @@ class UnionFind(val n: Int) {
     }
     fun groupCount(): Int {
         return groups
+    }
+    fun members(x: Int): List<Int> {
+        val root = findRoot(x)
+        return (0 until n).filter { findRoot(it) == root }
+    }
+    fun roots(): List<Int> {
+        return parents.withIndex().filter { it.value < 0 }.map { it.index }
+    }
+    fun allGroupMembers(): Map<Int, List<Int>> {
+        val groupMembers = mutableMapOf<Int, MutableList<Int>>()
+        for (member in 0 until n) {
+            val root = findRoot(member)
+            val members = groupMembers[root]
+            if (members == null) groupMembers[root] = mutableListOf(member)
+            else members.add(member)
+        }
+        return groupMembers
     }
 }
 class SegmentTree<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : AbstractList<E>() {
@@ -406,7 +448,7 @@ class XorShiftRandom : Random {
     }
     constructor(seed: Int) {
         x = seed.toUInt()
-        require(x != 0U) { "Initial state must have non-zero element." }
+        require(x != 0U) { "seed must be non-zero." }
     }
     override fun nextBits(bitCount: Int): Int {
         x = x xor x.shl(13)
@@ -811,5 +853,162 @@ private fun rangeCheck(size: Int, fromIndex: Int, toIndex: Int) {
         fromIndex > toIndex -> throw IllegalArgumentException("fromIndex ($fromIndex) is greater than toIndex ($toIndex).")
         fromIndex < 0 -> throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than zero.")
         toIndex > size -> throw IndexOutOfBoundsException("toIndex ($toIndex) is greater than size ($size).")
+    }
+}
+// data class Edge<K, V>(val to: K, val weight: V) : Map.Entry<K, V> {
+//     override val key: K
+//         get() = to
+//     override val value: V
+//         get() = weight
+// }
+// // data class MutableEdge<K, V>(val to: K, var weight: V) : MutableMap.MutableEntry<K, V> {
+// //     override val key: K
+// //         get() = to
+// //     override val value: V
+// //         get() = weight
+// //     override fun setValue(newValue: V): V = newValue.also { weight = newValue }
+// // }
+// // typealias MutableEdge<K, V> = MutableMap.MutableEntry<K, V>
+// // val MutableEdge<K, V>.to: K = this.key
+// class SimpleGraph<K, V>() : AbstractMutableMap<K, V>() {
+//     interface MutableEdge<K, V> : MutableMap.MutableEntry<K, V> {
+//         val to: K
+//             get() = key
+//         val weight: V
+//             get() = value
+//     }
+//     val map: MutableMap<K, V> = HashMap<K, V>()
+//     // override val entries: MutableSet<MutableEdge<K, V>>
+//     //     get() = map.entries
+//     override val entries: MutableSet<MutableEdge<K, V>>
+//         get() = object : AbstractMutableSet<MutableEdge<K, V>>() {
+//             val entries = map.entries
+//             override val size: Int
+//                 get() = entries.size
+//             override fun add(element: MutableEdge<K, V>): Boolean = entries.add(element)
+//             override fun iterator(): MutableIterator<MutableEdge<K, V>> = object : MutableIterator<MutableEdge<K, V>> {
+//                 val iterator = entries.iterator()
+//                 override fun hasNext(): Boolean = iterator.hasNext()
+//                 override fun next(): MutableEdge<K, V> = iterator.next().let { MutableEdge(it.key, it.value) }
+//                 override fun remove(): Unit = iterator.remove()
+//             }
+//         }
+//     override fun put(key: K, value: V): V? = map.put(key, value)
+// }
+// val list: List<Map.Entry<Int, Int>> = listOf<Edge<Int, Int>>()
+// interface Parent<K, V> {
+//     val test: Map<K, Map.Entry<K, V>>
+// }
+// class Child<K, V>() : Parent<K, V> {
+//     override val test = mutableMapOf<K, Edge<K, V>>()
+// }
+class IntCppRope() : AbstractMutableList<Int>() {
+    // private val 
+    override val size: Int get() = 0
+    override fun add(index: Int, element: Int): Unit {
+        
+    }
+    override fun get(index: Int): Int {
+        return 0
+    }
+    override fun removeAt(index: Int): Int {
+        return 0
+    }
+    override fun set(index: Int, element: Int): Int {
+        return 0
+    }
+}
+// import java.util.PriorityQueue
+class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>> {
+    override val size: Int
+    private val graph: List<MutableMap<Int, V>>
+    constructor(size: Int) {
+        this.size = size
+        graph = List(size) { mutableMapOf<Int, V>() }
+    }
+    constructor(graph: IntWightedSimpleGraph<V>) {
+        this.size = graph.size
+        this.graph = graph.map { it.toMutableMap() }
+    }
+    constructor(size: Int, edges: Collection<Triple<Int, Int, V>>) {
+        this.size = size
+        graph = List(size) { mutableMapOf<Int, V>() }
+        for ((from, to, weight) in edges) {
+            graph[from][to] = weight
+        }
+    }
+    override fun get(index: Int): MutableMap<Int, V> {
+        return graph.get(index)
+    }
+    val vertices: IntRange get() = graph.indices
+    fun containsEdge(from: Int, to: Int): Boolean {
+        fromRangeCheck(from)
+        toRangeCheck(to)
+        return graph[from].containsKey(to)
+    }
+    fun getEdge(from: Int, to: Int): V {
+        fromRangeCheck(from)
+        toRangeCheck(to)
+        return graph[from].getValue(to)
+    }
+    fun putEdge(from: Int, to: Int, weight: V): V? {
+        fromRangeCheck(from)
+        toRangeCheck(to)
+        return graph[from][to].also { graph[from][to] = weight }
+    }
+    fun removeEdge(from: Int, to: Int): V? {
+        fromRangeCheck(from)
+        toRangeCheck(to)
+        return graph[from].remove(to)
+    }
+    fun toGraph(): IntWightedSimpleGraph<V> {
+        return IntWightedSimpleGraph(this)
+    }
+    fun IntWightedSimpleGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
+        sourceRangeCheck(source)
+        val distances = MutableList<Long?>(size) { null }
+        val previouses = MutableList<Int?>(size) { null }
+        val queue = PriorityQueue<Pair<Long, Int>>()
+        for ((to, length) in get(source)) {
+            distances[to] = length
+            previouses[to] = source
+            queue.add(Pair(length, to))
+        }
+        val fixed = BooleanArray(size)
+        fixed[source] = true
+        while (queue.isNotEmpty()) {
+            val (distanceToFrom, from) = queue.poll()
+            if (fixed[from]) continue
+            fixed[from] = true
+            for ((to, length) in get(from)) {
+                if (fixed[to]) continue
+                val alternative = distanceToFrom + length
+                val distanceToTo = distances[to]
+                if (distanceToTo == null || alternative < distanceToTo) {
+                    distances[to] = alternative
+                    previouses[to] = from
+                    queue.add(Pair(alternative, to))
+                }
+            }
+        }
+        return Pair(distances, previouses)
+    }
+    private fun fromRangeCheck(from: Int) {
+        when {
+            from < 0 -> throw IndexOutOfBoundsException("from ($from) is less than zero.")
+            from > size -> throw IndexOutOfBoundsException("from ($from) is greater than size ($size).")
+        }
+    }
+    private fun toRangeCheck(to: Int) {
+        when {
+            to < 0 -> throw IndexOutOfBoundsException("to ($to) is less than zero.")
+            to > size -> throw IndexOutOfBoundsException("to ($to) is greater than size ($size).")
+        }
+    }
+    private fun sourceRangeCheck(source: Int) {
+        when {
+            source < 0 -> throw IndexOutOfBoundsException("source ($source) is less than zero.")
+            source > size -> throw IndexOutOfBoundsException("source ($source) is greater than size ($size).")
+        }
     }
 }
