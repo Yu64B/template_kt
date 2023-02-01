@@ -324,12 +324,12 @@ class SegmentTree<E> constructor(override val size: Int, private val identity: E
         }
         return combine(leftVal, rightVal)
     }
-    internal fun checkElementIndex(index: Int, size: Int) {
+    private fun checkElementIndex(index: Int, size: Int) {
         if (index < 0 || index >= size) {
             throw IndexOutOfBoundsException("index: $index, size: $size")
         }
     }
-    internal fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
+    private fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
         if (fromIndex < 0 || toIndex > size) {
             throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
         }
@@ -365,12 +365,12 @@ class SegmentTree<E> constructor(override val size: Int, private val identity: E
 //         }
 //         override val size: Int get() = _size
 //     }
-//     internal fun checkElementIndex(index: Int, size: Int) {
+//     private fun checkElementIndex(index: Int, size: Int) {
 //         if (index < 0 || index >= size) {
 //             throw IndexOutOfBoundsException("index: $index, size: $size")
 //         }
 //     }
-//     internal fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
+//     private fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
 //         if (fromIndex < 0 || toIndex > size) {
 //             throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
 //         }
@@ -444,21 +444,20 @@ operator fun Point.component1(): Int = x
 operator fun Point.component2(): Int = y
 // import kotlin.random.Random
 class XorShiftRandom : Random {
-    private var x: UInt
-    constructor() {
-        x = 2463534242U
-    }
+    private var x = 2463534242U
+    constructor()
     constructor(seed: Int) {
         x = seed.toUInt()
         require(x != 0U) { "seed must be non-zero." }
     }
-    override fun nextBits(bitCount: Int): Int {
+    override fun nextBits(bitCount: Int): Int =
+        nextInt().takeUpperBits(bitCount)
+    override fun nextInt(): Int {
         x = x xor x.shl(13)
         x = x xor x.shr(17)
         x = x xor x.shl(5)
-        return if (bitCount <= 0) 0 else (x and (2U.shl((bitCount - 1) and 31) - 1U)).toInt()
+        return x.toInt()
     }
-    override fun nextInt(): Int = nextBits(32)
     override fun nextInt(until: Int): Int = nextInt(0, until)
     override fun nextInt(from: Int, until: Int): Int {
         checkRangeBounds(from, until)
@@ -470,6 +469,8 @@ class XorShiftRandom : Random {
         checkRangeBounds(from, until)
         return (nextLong().toULong() % (until - from).toULong()).toLong() + from
     }
+    private fun Int.takeUpperBits(bitCount: Int): Int =
+        this.ushr(32 - bitCount) and (-bitCount).shr(31)
     private fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }
     private fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }
     private fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
