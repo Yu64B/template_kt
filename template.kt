@@ -215,6 +215,7 @@ val pairComparator = Comparator<Pair<Comparable<*>, Comparable<*>>> { a, b ->
 }
 class UnionFind(val n: Int) {
     val parents = IntArray(n) { -1 } // 親の番号 (-1で初期化)
+    val roots = (0 until n).toMutableSet()
     var groups = n // 集合の個数
     // 木の根を求める
     fun findRoot(x: Int): Int {
@@ -241,6 +242,7 @@ class UnionFind(val n: Int) {
         parents[xRoot] += parents[yRoot]
         parents[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
         groups--
+        roots.remove(yRoot)
     }
     fun size(): Int {
         return n
@@ -922,11 +924,12 @@ class IntCppRope() : AbstractMutableList<Int>() {
 class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>> {
     override val size: Int
     private val graph: List<MutableMap<Int, V>>
+    val vertices: IntRange get() = graph.indices
     constructor(size: Int) {
         this.size = size
         graph = List(size) { mutableMapOf<Int, V>() }
     }
-    constructor(graph: IntWightedSimpleGraph<V>) {
+    constructor(graph: Collection<Map<Int, V>>) {
         this.size = graph.size
         this.graph = graph.map { it.toMutableMap() }
     }
@@ -934,17 +937,21 @@ class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>
         this.size = size
         graph = List(size) { mutableMapOf<Int, V>() }
         for ((from, to, weight) in edges) {
+            fromRangeCheck(from)
+            toRangeCheck(to)
             graph[from][to] = weight
         }
     }
     override fun get(index: Int): MutableMap<Int, V> {
         return graph.get(index)
     }
-    val vertices: IntRange get() = graph.indices
     fun containsEdge(from: Int, to: Int): Boolean {
         fromRangeCheck(from)
         toRangeCheck(to)
         return graph[from].containsKey(to)
+    }
+    fun containsVertex(index: Int): Boolean {
+        return vertices.contains(index)
     }
     fun getEdge(from: Int, to: Int): V {
         fromRangeCheck(from)
@@ -964,35 +971,6 @@ class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>
     fun toGraph(): IntWightedSimpleGraph<V> {
         return IntWightedSimpleGraph(this)
     }
-    fun IntWightedSimpleGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
-        sourceRangeCheck(source)
-        val distances = MutableList<Long?>(size) { null }
-        val previouses = MutableList<Int?>(size) { null }
-        val queue = PriorityQueue<Pair<Long, Int>>()
-        for ((to, length) in get(source)) {
-            distances[to] = length
-            previouses[to] = source
-            queue.add(Pair(length, to))
-        }
-        val fixed = BooleanArray(size)
-        fixed[source] = true
-        while (queue.isNotEmpty()) {
-            val (distanceToFrom, from) = queue.poll()
-            if (fixed[from]) continue
-            fixed[from] = true
-            for ((to, length) in get(from)) {
-                if (fixed[to]) continue
-                val alternative = distanceToFrom + length
-                val distanceToTo = distances[to]
-                if (distanceToTo == null || alternative < distanceToTo) {
-                    distances[to] = alternative
-                    previouses[to] = from
-                    queue.add(Pair(alternative, to))
-                }
-            }
-        }
-        return Pair(distances, previouses)
-    }
     private fun fromRangeCheck(from: Int) {
         when {
             from < 0 -> throw IndexOutOfBoundsException("from ($from) is less than zero.")
@@ -1005,10 +983,41 @@ class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>
             to > size -> throw IndexOutOfBoundsException("to ($to) is greater than size ($size).")
         }
     }
-    private fun sourceRangeCheck(source: Int) {
+    internal fun sourceRangeCheck(source: Int) {
         when {
             source < 0 -> throw IndexOutOfBoundsException("source ($source) is less than zero.")
             source > size -> throw IndexOutOfBoundsException("source ($source) is greater than size ($size).")
         }
     }
+}
+fun IntWightedSimpleGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
+    sourceRangeCheck(source)
+    val distances = MutableList<Long?>(size) { null }
+    val previouses = MutableList<Int?>(size) { null }
+    val queue = PriorityQueue<Pair<Long, Int>>() { a, b -> 
+        if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
+    }
+    for ((to, length) in get(source)) {
+        distances[to] = length
+        previouses[to] = source
+        queue.add(Pair(length, to))
+    }
+    val fixed = BooleanArray(size)
+    fixed[source] = true
+    while (queue.isNotEmpty()) {
+        val (distanceToFrom, from) = queue.poll()
+        if (fixed[from]) continue
+        fixed[from] = true
+        for ((to, length) in get(from)) {
+            if (fixed[to]) continue
+            val alternative = distanceToFrom + length
+            val distanceToTo = distances[to]
+            if (distanceToTo == null || alternative < distanceToTo) {
+                distances[to] = alternative
+                previouses[to] = from
+                queue.add(Pair(alternative, to))
+            }
+        }
+    }
+    return Pair(distances, previouses)
 }
