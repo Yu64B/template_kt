@@ -213,60 +213,54 @@ val iterableComparator = Comparator<Iterable<Comparable<*>>> { a, b ->
 val pairComparator = Comparator<Pair<Comparable<*>, Comparable<*>>> { a, b -> 
     if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
 }
-class UnionFind(val n: Int) {
-    val parents = IntArray(n) { -1 } // 親の番号 (-1で初期化)
-    val roots = (0 until n).toMutableSet()
-    var groups = n // 集合の個数
+class IntUnionFind(override val size: Int) : AbstractSet<Int>() {
+    private val parentsOrSizes = IntArray(size) { -1 } // 親の番号または(-要素数)
+    private val _roots = parentsOrSizes.indices.toMutableSet()
+    val roots: Set<Int> get() = _roots.toSet()
+    val groupCount: Int get() = _roots.size // 集合の個数
+    override fun iterator(): Iterator<Int> {
+        return parentsOrSizes.indices.iterator()
+    }
     // 木の根を求める
     fun findRoot(x: Int): Int {
-        if (parents[x] < 0) return x // 根
+        if (parentsOrSizes[x] < 0) return x // 根
         else {
-            parents[x] = findRoot(parents[x]) // 経路圧縮
-            return parents[x]
+            parentsOrSizes[x] = findRoot(parentsOrSizes[x]) // 経路圧縮
+            return parentsOrSizes[x]
         }
     }
-    // xとyが同じ集合に属するか否か
+    // x と y が同じ集合に属するか否か
     fun same(x: Int, y: Int): Boolean {
         return findRoot(x) == findRoot(y)
     }
-    // xとyの属する集合を併合
-    fun unite(x: Int, y: Int) {
+    // x と y の属する集合を併合
+    fun unite(x: Int, y: Int): Int? {
         var xRoot = findRoot(x)
         var yRoot = findRoot(y)
-        if (xRoot == yRoot) return
-        if (xRoot > yRoot) { // yの属する集合のほうが大きかったら
+        if (xRoot == yRoot) return null
+        if (xRoot > yRoot) { // y の属する集合のほうが大きかったら
             val tmp = xRoot
             xRoot = yRoot
             yRoot = tmp
         }
-        parents[xRoot] += parents[yRoot]
-        parents[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
-        groups--
-        roots.remove(yRoot)
-    }
-    fun size(): Int {
-        return n
+        parentsOrSizes[xRoot] += parentsOrSizes[yRoot]
+        parentsOrSizes[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
+        _roots.remove(yRoot)
+        return xRoot
     }
     fun sizeOf(x: Int): Int {
-        return -parents[findRoot(x)]
-    }
-    fun groupCount(): Int {
-        return groups
+        return -parentsOrSizes[findRoot(x)]
     }
     fun members(x: Int): List<Int> {
         val root = findRoot(x)
-        return (0 until n).filter { findRoot(it) == root }
-    }
-    fun roots(): List<Int> {
-        return parents.withIndex().filter { it.value < 0 }.map { it.index }
+        return parentsOrSizes.indices.filter { findRoot(it) == root }
     }
     fun allGroupMembers(): Map<Int, List<Int>> {
         val groupMembers = mutableMapOf<Int, MutableList<Int>>()
-        for (member in 0 until n) {
+        for (member in 0 until size) {
             val root = findRoot(member)
-            val members = groupMembers[root]
-            if (members == null) groupMembers[root] = mutableListOf(member)
-            else members.add(member)
+            val members = groupMembers.getOrPut(root) { mutableListOf<Int>() }
+            members.add(member)
         }
         return groupMembers
     }
@@ -775,6 +769,7 @@ class MutableUnionFind<E> : AbstractMutableSet<E>() {
 fun <T> Iterable<T>.toMutableUnionFind(): MutableUnionFind<T> {
     return MutableUnionFind<T>().also { for (item in this) it.add(item) }
 }
+// 未完成
 fun binarySearch(from: Int, to: Int, predicate: (Int) -> Boolean): Int? {
     if (from == to) {
         return null
