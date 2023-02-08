@@ -232,12 +232,11 @@ class IntUnionFind(override val size: Int) : AbstractSet<Int>() {
         return findRoot(x) == findRoot(y)
     }
     fun unite(x: Int, y: Int): Boolean {
-        var parentRoot = findRoot(x)
-        var childRoot = findRoot(y)
-        if (parentRoot == childRoot) return false
-        if (parentRoot > childRoot) {
-            parentRoot = childRoot.also { childRoot = parentRoot }
-        }
+        val xRoot = findRoot(x)
+        val yRoot = findRoot(y)
+        if (xRoot == yRoot) return false
+        val parentRoot = if (-xRoot < -yRoot) yRoot else xRoot
+        val childRoot = if (-xRoot < -yRoot) xRoot else yRoot
         parentsOrSizes[parentRoot] += parentsOrSizes[childRoot]
         parentsOrSizes[childRoot] = parentRoot
         _roots.remove(childRoot)
@@ -260,7 +259,7 @@ class IntUnionFind(override val size: Int) : AbstractSet<Int>() {
         return groupMembers
     }
 }
-class SegmentTree<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : AbstractList<E>() {
+open class ArraySegmentTree<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : AbstractList<E>() {
     private val node: MutableList<E> // How to use Array<E>?
     // private val node = MutableList(size.shl(1)) { identity }
     private val nodeSize: Int
@@ -287,7 +286,7 @@ class SegmentTree<E> constructor(override val size: Int, private val identity: E
         return node[nodeSize + index]
         // return node[size + index]
     }
-    fun set(index: Int, value: E) {
+    open fun set(index: Int, value: E) {
         checkElementIndex(index, size)
         var count = nodeSize + index
         // var count = size + index
@@ -297,7 +296,7 @@ class SegmentTree<E> constructor(override val size: Int, private val identity: E
             node[count] = combine(node[count.shl(1).or(0)], node[count.shl(1).or(1)])
         }
     }
-    fun query(fromIndex: Int, toIndex: Int): E {
+    open fun query(fromIndex: Int, toIndex: Int): E {
         checkRangeIndexes(fromIndex, toIndex, size)
         var left = nodeSize + fromIndex
         // var left = size + fromIndex
@@ -313,12 +312,33 @@ class SegmentTree<E> constructor(override val size: Int, private val identity: E
         }
         return combine(leftVal, rightVal)
     }
-    private fun checkElementIndex(index: Int, size: Int) {
+    override fun subList(fromIndex: Int, toIndex: Int): ArraySegmentTree<E> = SubList(this, fromIndex, toIndex)
+    private class SubList<E>(private val list: ArraySegmentTree<E>, private val fromIndex: Int, toIndex: Int) : ArraySegmentTree<E>(toIndex - fromIndex, list.identity, list.combine) {
+        private var _size = 0
+        init {
+            checkRangeIndexes(fromIndex, toIndex, list.size)
+            this._size = toIndex - fromIndex
+        }
+        override fun get(index: Int): E {
+            checkElementIndex(index, _size)
+            return list[fromIndex + index]
+        }
+        override fun set(index: Int, value: E) {
+            checkElementIndex(index, _size)
+            list.set(fromIndex + index, value)
+        }
+        override fun query(fromIndex: Int, toIndex: Int): E {
+            checkRangeIndexes(fromIndex, toIndex, _size)
+            return query(this.fromIndex + fromIndex, this.fromIndex + toIndex)
+        }
+        override val size: Int get() = _size
+    }
+    internal fun checkElementIndex(index: Int, size: Int) {
         if (index < 0 || index >= size) {
             throw IndexOutOfBoundsException("index: $index, size: $size")
         }
     }
-    private fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
+    internal fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
         if (fromIndex < 0 || toIndex > size) {
             throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
         }
@@ -425,8 +445,8 @@ class SegmentTree<E> constructor(override val size: Int, private val identity: E
 // fun <T> SegmentTree(size: Int, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(size, identity, combine)
 // fun <T> SegmentTree(elements: Iterable<T>, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(elements, identity, combine)
 // fun <T> SegmentTree(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(size, init, identity, combine)
-fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
-    return SegmentTree(this, identity, combine)
+fun <T> Iterable<T>.toArraySegmentTree(identity: T, combine: (T, T) -> T): ArraySegmentTree<T> {
+    return ArraySegmentTree(this, identity, combine)
 }
 // import java.awt.Point
 operator fun Point.component1(): Int = x
@@ -647,123 +667,123 @@ fun primeFactorize(x: Long): List<Pair<Long, Int>> {
     return result
 }
 // fun Long.primeFactorize() = primeFactorize(this)
-class MutableMultiSet<T> {
-    private class Node<T>(var value: T) {
-        var left: Node<T>? = null
-        var right: Node<T>? = null
-        var height = 0
-        var size = 0
-        fun update(): Node<T> {
-            height = Math.max(left!!.height, right!!.height) + 1
-            size = left!!.size + right!!.size + 1
-            return this
-        }
-        fun rotateLeft(): Node<T> {
-            val newRoot = right!!
-            right = newRoot.left
-            newRoot.left = this
-            update()
-            return newRoot.update()
-        }
-        fun rotateRight(): Node<T> {
-            val newRoot = left!!
-            left = newRoot.right
-            newRoot.right = this
-            update()
-            return newRoot.update()
-        }
-        fun calcHeightDiff() = left!!.height - right!!.height
-        fun balance(): Node<T> {
-            val heightDiff = calcHeightDiff()
-            if (heightDiff == 2) {
-                if (left!!.calcHeightDiff() < 0) left = left!!.rotateLeft()
-                return rotateRight()
-            }
-            else if (heightDiff == -2) {
-                if (right!!.calcHeightDiff() > 0) right = right!!.rotateRight()
-                return rotateLeft()
-            }
-            else return update()
-        }
-    }
-}
-class MutableUnionFind<E> : AbstractMutableSet<E>() {
-    val map = mutableMapOf<E, MutableSet<E>>()
-    val groups = mutableMapOf<E, MutableSet<E>>()
-    override val size: Int
-        get() = map.size
-    override fun add(element: E): Boolean {
-        if (map.containsKey(element)) {
-            return false
-        }
-        map[element] = HashSet<E>(2).apply { add(element) }
-        groups[element] = HashSet<E>(2).apply { add(element) }
-        return true
-    }
-    override fun contains(element: E): Boolean {
-        return map.containsKey(element)
-    }
-    override fun iterator(): MutableIterator<E> {
-        return object : MutableIterator<E> {
-            val iterator = map.entries.iterator()
-            var nextEntry: MutableMap.MutableEntry<E, MutableSet<E>>? = null
-            override fun hasNext(): Boolean {
-                return iterator.hasNext()
-            }
-            override fun next(): E {
-                return iterator.next().also { nextEntry = it }.key
-            }
-            override fun remove() {
-                val element = nextEntry!!.key
-                val set = nextEntry!!.value
-                set.remove(element)
-                if (groups.remove(element) != null && set.isNotEmpty()) {
-                    groups[set.first()] = set
-                }
-                iterator.remove()
-                nextEntry = null
-            }
-        }
-    }
-    override fun remove(element: E): Boolean {
-        val set = map[element]
-        if (set == null) {
-            return false
-        }
-        set.remove(element)
-        if (groups.remove(element) != null && set.isNotEmpty()) {
-            groups[set.first()] = set
-        }
-        map.remove(element)
-        return true
-    }
-    fun same(x: E, y: E): Boolean {
-        val xSet = map[x] ?: throw NoSuchElementException("Collection contains no element matching the x.")
-        val ySet = map[y] ?: throw NoSuchElementException("Collection contains no element matching the y.")
-        return xSet === ySet
-    }
-    fun unite(x: E, y: E): Boolean {
-        val xSet = map[x] ?: throw NoSuchElementException("Collection contains no element matching the x.")
-        val ySet = map[y] ?: throw NoSuchElementException("Collection contains no element matching the y.")
-        if (xSet === ySet) {
-            return false
-        }
-        val smallSet = if (xSet.size > ySet.size) ySet else xSet
-        val largeSet = if (xSet.size > ySet.size) xSet else ySet
-        val iterator = smallSet.iterator()
-        while (iterator.hasNext()) {
-            val element = iterator.next()
-            largeSet.add(element)
-            map[element] = largeSet
-            groups.remove(element)
-            iterator.remove()
-        }
-        return true
-    }
-}
-fun <T> Iterable<T>.toMutableUnionFind(): MutableUnionFind<T> {
-    return MutableUnionFind<T>().also { for (item in this) it.add(item) }
-}
+// class MutableMultiSet<T> {
+//     private class Node<T>(var value: T) {
+//         var left: Node<T>? = null
+//         var right: Node<T>? = null
+//         var height = 0
+//         var size = 0
+//         fun update(): Node<T> {
+//             height = Math.max(left!!.height, right!!.height) + 1
+//             size = left!!.size + right!!.size + 1
+//             return this
+//         }
+//         fun rotateLeft(): Node<T> {
+//             val newRoot = right!!
+//             right = newRoot.left
+//             newRoot.left = this
+//             update()
+//             return newRoot.update()
+//         }
+//         fun rotateRight(): Node<T> {
+//             val newRoot = left!!
+//             left = newRoot.right
+//             newRoot.right = this
+//             update()
+//             return newRoot.update()
+//         }
+//         fun calcHeightDiff() = left!!.height - right!!.height
+//         fun balance(): Node<T> {
+//             val heightDiff = calcHeightDiff()
+//             if (heightDiff == 2) {
+//                 if (left!!.calcHeightDiff() < 0) left = left!!.rotateLeft()
+//                 return rotateRight()
+//             }
+//             else if (heightDiff == -2) {
+//                 if (right!!.calcHeightDiff() > 0) right = right!!.rotateRight()
+//                 return rotateLeft()
+//             }
+//             else return update()
+//         }
+//     }
+// }
+// class MutableUnionFind<E> : AbstractMutableSet<E>() {
+//     val map = mutableMapOf<E, MutableSet<E>>()
+//     val groups = mutableMapOf<E, MutableSet<E>>()
+//     override val size: Int
+//         get() = map.size
+//     override fun add(element: E): Boolean {
+//         if (map.containsKey(element)) {
+//             return false
+//         }
+//         map[element] = HashSet<E>(2).apply { add(element) }
+//         groups[element] = HashSet<E>(2).apply { add(element) }
+//         return true
+//     }
+//     override fun contains(element: E): Boolean {
+//         return map.containsKey(element)
+//     }
+//     override fun iterator(): MutableIterator<E> {
+//         return object : MutableIterator<E> {
+//             val iterator = map.entries.iterator()
+//             var nextEntry: MutableMap.MutableEntry<E, MutableSet<E>>? = null
+//             override fun hasNext(): Boolean {
+//                 return iterator.hasNext()
+//             }
+//             override fun next(): E {
+//                 return iterator.next().also { nextEntry = it }.key
+//             }
+//             override fun remove() {
+//                 val element = nextEntry!!.key
+//                 val set = nextEntry!!.value
+//                 set.remove(element)
+//                 if (groups.remove(element) != null && set.isNotEmpty()) {
+//                     groups[set.first()] = set
+//                 }
+//                 iterator.remove()
+//                 nextEntry = null
+//             }
+//         }
+//     }
+//     override fun remove(element: E): Boolean {
+//         val set = map[element]
+//         if (set == null) {
+//             return false
+//         }
+//         set.remove(element)
+//         if (groups.remove(element) != null && set.isNotEmpty()) {
+//             groups[set.first()] = set
+//         }
+//         map.remove(element)
+//         return true
+//     }
+//     fun same(x: E, y: E): Boolean {
+//         val xSet = map[x] ?: throw NoSuchElementException("Collection contains no element matching the x.")
+//         val ySet = map[y] ?: throw NoSuchElementException("Collection contains no element matching the y.")
+//         return xSet === ySet
+//     }
+//     fun unite(x: E, y: E): Boolean {
+//         val xSet = map[x] ?: throw NoSuchElementException("Collection contains no element matching the x.")
+//         val ySet = map[y] ?: throw NoSuchElementException("Collection contains no element matching the y.")
+//         if (xSet === ySet) {
+//             return false
+//         }
+//         val smallSet = if (xSet.size > ySet.size) ySet else xSet
+//         val largeSet = if (xSet.size > ySet.size) xSet else ySet
+//         val iterator = smallSet.iterator()
+//         while (iterator.hasNext()) {
+//             val element = iterator.next()
+//             largeSet.add(element)
+//             map[element] = largeSet
+//             groups.remove(element)
+//             iterator.remove()
+//         }
+//         return true
+//     }
+// }
+// fun <T> Iterable<T>.toMutableUnionFind(): MutableUnionFind<T> {
+//     return MutableUnionFind<T>().also { for (item in this) it.add(item) }
+// }
 // 未完成
 fun binarySearch(from: Int, to: Int, predicate: (Int) -> Boolean): Int? {
     if (from == to) {
@@ -912,7 +932,7 @@ class IntCppRope() : AbstractMutableList<Int>() {
     }
 }
 // import java.util.PriorityQueue
-class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>> {
+class ArrayIntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>> {
     override val size: Int
     private val graph: List<MutableMap<Int, V>>
     val vertices: IntRange get() = graph.indices
@@ -959,8 +979,8 @@ class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>
         toRangeCheck(to)
         return graph[from].remove(to)
     }
-    fun toGraph(): IntWightedSimpleGraph<V> {
-        return IntWightedSimpleGraph(this)
+    fun toGraph(): ArrayIntWightedSimpleGraph<V> {
+        return ArrayIntWightedSimpleGraph(this)
     }
     private fun fromRangeCheck(from: Int) {
         when {
@@ -981,7 +1001,7 @@ class IntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>
         }
     }
 }
-fun IntWightedSimpleGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
+fun ArrayIntWightedSimpleGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
     sourceRangeCheck(source)
     val distances = MutableList<Long?>(size) { null }
     val previouses = MutableList<Int?>(size) { null }
