@@ -214,39 +214,34 @@ val pairComparator = Comparator<Pair<Comparable<*>, Comparable<*>>> { a, b ->
     if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
 }
 class IntUnionFind(override val size: Int) : AbstractSet<Int>() {
-    private val parentsOrSizes = IntArray(size) { -1 } // 親の番号または(-要素数)
+    private val parentsOrSizes = IntArray(size) { -1 }
     private val _roots = parentsOrSizes.indices.toMutableSet()
     val roots: Set<Int> get() = _roots.toSet()
-    val groupCount: Int get() = _roots.size // 集合の個数
+    val groupCount: Int get() = _roots.size
     override fun iterator(): Iterator<Int> {
         return parentsOrSizes.indices.iterator()
     }
-    // 木の根を求める
     fun findRoot(x: Int): Int {
-        if (parentsOrSizes[x] < 0) return x // 根
+        if (parentsOrSizes[x] < 0) return x
         else {
-            parentsOrSizes[x] = findRoot(parentsOrSizes[x]) // 経路圧縮
+            parentsOrSizes[x] = findRoot(parentsOrSizes[x])
             return parentsOrSizes[x]
         }
     }
-    // x と y が同じ集合に属するか否か
     fun same(x: Int, y: Int): Boolean {
         return findRoot(x) == findRoot(y)
     }
-    // x と y の属する集合を併合
-    fun unite(x: Int, y: Int): Int? {
-        var xRoot = findRoot(x)
-        var yRoot = findRoot(y)
-        if (xRoot == yRoot) return null
-        if (xRoot > yRoot) { // y の属する集合のほうが大きかったら
-            val tmp = xRoot
-            xRoot = yRoot
-            yRoot = tmp
+    fun unite(x: Int, y: Int): Boolean {
+        var parentRoot = findRoot(x)
+        var childRoot = findRoot(y)
+        if (parentRoot == childRoot) return false
+        if (parentRoot > childRoot) {
+            parentRoot = childRoot.also { childRoot = parentRoot }
         }
-        parentsOrSizes[xRoot] += parentsOrSizes[yRoot]
-        parentsOrSizes[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
-        _roots.remove(yRoot)
-        return xRoot
+        parentsOrSizes[parentRoot] += parentsOrSizes[childRoot]
+        parentsOrSizes[childRoot] = parentRoot
+        _roots.remove(childRoot)
+        return true
     }
     fun sizeOf(x: Int): Int {
         return -parentsOrSizes[findRoot(x)]
