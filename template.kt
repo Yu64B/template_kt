@@ -244,7 +244,7 @@ class ImplementationUnionFind<E>(elements: Collection<E>) : AbstractUnionFind<E>
     private val children = mutableMapOf<E, E>()
     private val sizes = mutableMapOf<E, Int>()
     override val size: Int get() = parentsOrDescendants.size
-    override val roots: Set<E> get() = sizes.keys//.toSet()
+    override val roots: Set<E> get() = sizes.keys.toSet()
     override val groupCount: Int get() = sizes.size
     init {
         for (element in elements) {
@@ -335,6 +335,8 @@ class ImplementationUnionFind<E>(elements: Collection<E>) : AbstractUnionFind<E>
 // }
 class IntUnionFind(override val size: Int) : AbstractUnionFind<Int>() {
     private val parentsOrSizes = IntArray(size) { -1 }
+    // private val ancestersOrSizes = IntArray(size) { -1 }
+    // private val parentsOrDescendants = IntArray(size) { it }
     private val _roots = parentsOrSizes.indices.toMutableSet()
     override val roots: Set<Int> get() = _roots.toSet()
     override val groupCount: Int get() = _roots.size
