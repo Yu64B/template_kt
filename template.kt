@@ -638,42 +638,39 @@ class XorShiftRandom : Random {
     private fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }
     private fun boundsErrorMessage(from: Any, until: Any) = "Random range is empty: [$from, $until)."
 }
-// 未完成
 class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : AbstractMutableSet<E>() {
     private val indexes = mutableMapOf<E, Int>()
     private val values = mutableListOf<E>()
-    private val valuesSet = mutableSetOf<E>() // for iterator function
-    override val size: Int
-        get() = indexes.size
+    override val size: Int get() = indexes.size
     override fun add(element: E): Boolean {
-        if (indexes.contains(element)) {
+        if (indexes.containsKey(element)) {
             return false
         }
         values.add(element)
         indexes[element] = values.lastIndex
-        valuesSet.add(element)
         return true
     }
     override fun contains(element: E): Boolean {
-        return indexes.contains(element)
+        return indexes.containsKey(element)
     }
     override fun iterator(): MutableIterator<E> {
-        // val iterator = indexes.keys.iterator()
-        val iterator = valuesSet.iterator()
+        val iterator = indexes.iterator()
         var nextValue: E? = null
         return object : MutableIterator<E> {
             override fun hasNext(): Boolean {
                 return iterator.hasNext()
             }
             override fun next(): E {
-                return iterator.next().also { nextValue = it }
+                return iterator.next().key.also { nextValue = it }
             }
             // 動作未確認
             override fun remove() {
+                if (nextValue == null) {
+                    throw IllegalStateException()
+                }
                 val index = indexes[nextValue]
-                iterator.remove()
                 removeFromList(index!!)
-                indexes.remove(nextValue)
+                iterator.remove()
                 nextValue = null
             }
         }
@@ -683,15 +680,15 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
         if (index == null) {
             return false
         }
-        valuesSet.remove(element)
         removeFromList(index)
         indexes.remove(element)
         return true
     }
     private fun removeFromList(index: Int) {
-        val lastElement = values[values.lastIndex]
+        val lastElement = values.last()
         values[index] = lastElement
         indexes[lastElement] = index
+        // values.removeLast()
         values.removeAt(values.lastIndex)
     }
     fun getRandom(): E {
