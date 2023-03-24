@@ -240,9 +240,9 @@ abstract class AbstractUnionFind<E>() : UnionFind<E>, AbstractSet<E>() {
     }
 }
 class ImplementationUnionFind<E>(elements: Collection<E>) : AbstractUnionFind<E>() {
-    private val parentsOrDescendants = mutableMapOf<E, E>()
-    private val children = mutableMapOf<E, E>()
-    private val sizes = mutableMapOf<E, Int>()
+    private val parentsOrDescendants: MutableMap<E, E> = LinkedHashMap(elements.size, 1.0f)
+    private val children: MutableMap<E, E> = LinkedHashMap(elements.size, 1.0f)
+    private val sizes: MutableMap<E, Int> = LinkedHashMap(elements.size, 1.0f)
     override val size: Int get() = parentsOrDescendants.size
     override val roots: Set<E> get() = sizes.keys.toSet()
     override val groupCount: Int get() = sizes.size
@@ -334,23 +334,39 @@ class ImplementationUnionFind<E>(elements: Collection<E>) : AbstractUnionFind<E>
     
 // }
 class IntUnionFind(override val size: Int) : AbstractUnionFind<Int>() {
-    private val parentsOrSizes = IntArray(size) { -1 }
-    // private val ancestersOrSizes = IntArray(size) { -1 }
-    // private val parentsOrDescendants = IntArray(size) { it }
-    private val _roots = parentsOrSizes.indices.toMutableSet()
-    override val roots: Set<Int> get() = _roots.toSet()
-    override val groupCount: Int get() = _roots.size
+    private val ancestersOrSizes = IntArray(size) { -1 }
+    private val parentsOrDescendants = IntArray(size) { -it }
+    private val nextRoots = IntArray(size) { if (it == size - 1) it else it + 1 }
+    private var firstRoot = 0
+    private var _groupCount = size
+    override val roots: Set<Int> get() {
+        val roots = mutableSetOf<Int>()
+        var prevRoot = firstRoot
+        var root = prevRoot
+        roots.add(root)
+        while (nextRoots[root] != root) {
+            root = nextRoots[root]
+            if (root >= 0) {
+                nextRoots[prevRoot] = root
+                prevRoot = root
+                roots.add(root)
+            }
+            
+        }
+        return roots
+    }
+    override val groupCount: Int get() = _groupCount
     override fun iterator(): Iterator<Int> {
-        return parentsOrSizes.indices.iterator()
+        return ancestersOrSizes.indices.iterator()
     }
     override fun contains(element: Int): Boolean {
-        return 0 <= element && element <= size
+        return 0 <= element && element < size
     }
     fun findRoot(x: Int): Int {
         checkElementIndex(x, size)
-        if (parentsOrSizes[x] < 0) return x
-        parentsOrSizes[x] = findRoot(parentsOrSizes[x])
-        return parentsOrSizes[x]
+        if (ancestersOrSizes[x] < 0) return x
+        ancestersOrSizes[x] = findRoot(ancestersOrSizes[x])
+        return ancestersOrSizes[x]
     }
     override fun same(x: Int, y: Int): Boolean {
         checkElementIndex(x, size)
@@ -365,14 +381,18 @@ class IntUnionFind(override val size: Int) : AbstractUnionFind<Int>() {
         if (xRoot == yRoot) return false
         val parentRoot = if (-xRoot < -yRoot) yRoot else xRoot
         val childRoot = if (-xRoot < -yRoot) xRoot else yRoot
-        parentsOrSizes[parentRoot] += parentsOrSizes[childRoot]
-        parentsOrSizes[childRoot] = parentRoot
-        _roots.remove(childRoot)
+        ancestersOrSizes[parentRoot] += ancestersOrSizes[childRoot]
+        ancestersOrSizes[childRoot] = parentRoot
+        val parentDescendant = -parentsOrDescendants[parentRoot]
+        parentsOrDescendants[parentRoot] = parentsOrDescendants[childRoot]
+        parentsOrDescendants[childRoot] = parentDescendant
+        nextRoots[childRoot] = nextRoots[childRoot].inv()
+        _groupCount--
         return true
     }
     override fun sizeOf(x: Int): Int {
         checkElementIndex(x, size)
-        return -parentsOrSizes[findRoot(x)]
+        return -ancestersOrSizes[findRoot(x)]
     }
     override fun members(x: Int): Set<Int> {
         checkElementIndex(x, size)
