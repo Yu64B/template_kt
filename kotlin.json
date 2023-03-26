@@ -403,7 +403,7 @@
 			"\t\tthis.ushr(32 - bitCount) and (-bitCount).shr(31)",
 			"\tprivate fun checkRangeBounds(from: Int, until: Int) = require(until > from) { boundsErrorMessage(from, until) }",
 			"\tprivate fun checkRangeBounds(from: Long, until: Long) = require(until > from) { boundsErrorMessage(from, until) }",
-			"\tprivate fun boundsErrorMessage(from: Any, until: Any) = \"Random range is empty: [$from, $until).\"",
+			"\tprivate fun boundsErrorMessage(from: Any, until: Any) = \"Random range is empty: [\\$from, \\$until).\"",
 			"}",
 			""
 		],
