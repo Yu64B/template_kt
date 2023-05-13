@@ -936,14 +936,20 @@ fun primeFactorize(x: Long): List<Pair<Long, Int>> {
 //     return MutableUnionFind<T>().also { for (item in this) it.add(item) }
 // }
 // 未完成
-fun binarySearch(from: Int, to: Int, predicate: (Int) -> Boolean): Int? {
-    if (from == to) {
+fun binarySearch(from: Int = Int.MIN_VALUE, to: Int = Int.MAX_VALUE, predicate: (Int) -> Boolean): Int? {
+    require(from <= to) { "from ($from) is greater than to ($to)." }
+    val fromResult = predicate(from)
+    val toResult = predicate(to)
+    if (fromResult && toResult) {
+        return from
+    }
+    if (!fromResult && !toResult) {
         return null
     }
-    var ok = from
-    var ng = to
+    var ok = if (fromResult) from else to
+    var ng = if (fromResult) to else from
     while (Math.abs(ng - ok) > 1) {
-        val mid = (ok + ng).ushr(1)
+        val mid = if (ok xor ng < 0) (ok + ng).shr(1) else ok + (ng - ok).shr(1)
         if (predicate(mid)) {
             ok = mid
         }
@@ -951,7 +957,7 @@ fun binarySearch(from: Int, to: Int, predicate: (Int) -> Boolean): Int? {
             ng = mid
         }
     }
-    return if (predicate(ok)) ok else null
+    return ok
 }
 fun binarySearch(from: Long, to: Long, predicate: (Long) -> Boolean): Long? {
     if (from == to) {
