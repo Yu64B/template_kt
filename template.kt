@@ -949,7 +949,7 @@ fun binarySearch(from: Int = Int.MIN_VALUE, to: Int = Int.MAX_VALUE, predicate: 
     var ok = if (fromResult) from else to
     var ng = if (fromResult) to else from
     while (Math.abs(ng - ok) > 1) {
-        val mid = if (ok xor ng < 0) (ok + ng).ushr(1) else ok + (ng - ok).ushr(1)
+        val mid = if (ok xor ng < 0) (ok + ng).shr(1) else ok + (ng - ok).shr(1)
         if (predicate(mid)) {
             ok = mid
         }
