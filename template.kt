@@ -231,188 +231,246 @@ interface UnionFind<E> : Set<E> {
     fun members(x: E): Set<E>
     fun allGroupMembers(): Map<E, Set<E>>
 }
-interface MutableUnionFind<E> : UnionFind<E>, MutableSet<E>
-abstract class AbstractUnionFind<E>() : UnionFind<E>, AbstractSet<E>() {
-    internal fun checkElementIndex(index: Int, size: Int) {
-        if (index < 0 || index >= size) {
-            throw IndexOutOfBoundsException("index: $index, size: $size")
+class IntUnionFind(val n: Int) : UnionFind<Int> {
+    val parents = IntArray(n) { -1 } // 親の番号 (-1で初期化)
+    val roots = (0 until n).toMutableSet()
+    var groups = n // 集合の個数
+    // 木の根を求める
+    fun findRoot(x: Int): Int {
+        if (parents[x] < 0) return x // 根
+        else {
+            parents[x] = findRoot(parents[x]) // 経路圧縮
+            return parents[x]
         }
     }
-}
-class ImplementationUnionFind<E>(elements: Collection<E>) : AbstractUnionFind<E>() {
-    private val parentsOrDescendants: MutableMap<E, E> = LinkedHashMap(elements.size, 1.0f)
-    private val children: MutableMap<E, E> = LinkedHashMap(elements.size, 1.0f)
-    private val sizes: MutableMap<E, Int> = LinkedHashMap(elements.size, 1.0f)
-    override val size: Int get() = parentsOrDescendants.size
-    override val roots: Set<E> get() = sizes.keys.toSet()
-    override val groupCount: Int get() = sizes.size
-    init {
-        for (element in elements) {
-            parentsOrDescendants[element] = element
-            children[element] = element
-            sizes[element] = 1
-        }
-    }
-    override fun iterator(): Iterator<E> {
-        return parentsOrDescendants.keys.iterator()
-    }
-    override fun contains(element: E): Boolean {
-        return parentsOrDescendants.containsKey(element)
-    }
-    fun findRoot(x: E): E {
-        if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
-        if (sizes.containsKey(x)) return x
-        val root = findRoot(parentsOrDescendants.getValue(x))
-        parentsOrDescendants[x] = root
-        return root
-    }
-    override fun same(x: E, y: E): Boolean {
-        if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
-        if (!parentsOrDescendants.containsKey(y)) throw NoSuchElementException("Element $y is missing in the set.")
+    // xとyが同じ集合に属するか否か
+    fun same(x: Int, y: Int): Boolean {
         return findRoot(x) == findRoot(y)
     }
-    override fun unite(x: E, y: E): Boolean {
-        if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
-        if (!parentsOrDescendants.containsKey(y)) throw NoSuchElementException("Element $y is missing in the set.")
-        val xRoot = findRoot(x)
-        val yRoot = findRoot(y)
-        if (xRoot == yRoot) return false
-        val xSize = sizes.getValue(xRoot)
-        val ySize = sizes.getValue(yRoot)
-        val parentRoot = if (xSize < ySize) yRoot else xRoot
-        val childRoot = if (xSize < ySize) xRoot else yRoot
-        val parentLeaf = parentsOrDescendants.getValue(parentRoot)
-        val childLeaf = parentsOrDescendants.getValue(childRoot)
-        children[parentLeaf] = childRoot
-        parentsOrDescendants[parentRoot] = childLeaf
-        parentsOrDescendants[childRoot] = parentRoot
-        sizes[parentRoot] = xSize + ySize
-        sizes.remove(childRoot)
-        return true
-    }
-    override fun sizeOf(x: E): Int {
-        if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
-        return sizes.getValue(findRoot(x))
-    }
-    override fun members(x: E): Set<E> {
-        if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
-        val members = mutableSetOf<E>()
-        var member = findRoot(x)
-        while (children[member] != member) {
-            members.add(member)
-            member = children.getValue(member)
+    // xとyの属する集合を併合
+    fun unite(x: Int, y: Int) {
+        var xRoot = findRoot(x)
+        var yRoot = findRoot(y)
+        if (xRoot == yRoot) return
+        if (xRoot > yRoot) { // yの属する集合のほうが大きかったら
+            val tmp = xRoot
+            xRoot = yRoot
+            yRoot = tmp
         }
-        members.add(member)
-        return members
+        parents[xRoot] += parents[yRoot]
+        parents[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
+        groups--
+        roots.remove(yRoot)
     }
-    override fun allGroupMembers(): Map<E, Set<E>> {
-        val groupMembers = mutableMapOf<E, Set<E>>()
-        for (root in sizes.keys) {
-            val members = mutableSetOf<E>()
-            var member = root
-            while (children[member] != member) {
-                members.add(member)
-                member = children.getValue(member)
-            }
-            members.add(member)
-            groupMembers[root] = members
+    fun size(): Int {
+        return n
+    }
+    fun sizeOf(x: Int): Int {
+        return -parents[findRoot(x)]
+    }
+    fun groupCount(): Int {
+        return groups
+    }
+    fun members(x: Int): List<Int> {
+        val root = findRoot(x)
+        return (0 until n).filter { findRoot(it) == root }
+    }
+    fun roots(): List<Int> {
+        return parents.withIndex().filter { it.value < 0 }.map { it.index }
+    }
+    fun allGroupMembers(): Map<Int, List<Int>> {
+        val groupMembers = mutableMapOf<Int, MutableList<Int>>()
+        for (member in 0 until n) {
+            val root = findRoot(member)
+            val members = groupMembers[root]
+            if (members == null) groupMembers[root] = mutableListOf(member)
+            else members.add(member)
         }
         return groupMembers
     }
 }
-// class ImplementationMutableUnionFind<E> : MutableUnionFind<E> {
-//     private val ancesters: MutableMap<E, E>
-//     private val descendants: MutableMap<E, E>
-//     private val sizes: MutableMap<E, Int>
-//     constructor() {
-//         ancesters = mutableMapOf<E, E>()
-//         descendants = mutableMapOf<E, E>()
-//         sizes = mutableMapOf<E, Int>()
+// interface MutableUnionFind<E> : UnionFind<E>, MutableSet<E>
+// abstract class AbstractUnionFind<E>() : UnionFind<E>, AbstractSet<E>() {
+//     internal fun checkElementIndex(index: Int, size: Int) {
+//         if (index < 0 || index >= size) {
+//             throw IndexOutOfBoundsException("index: $index, size: $size")
+//         }
 //     }
 // }
-// abstract class AbstractIntUnionFind() : UnionFind<Int>, AbstractSet<Int>() {
-    
+// class ImplementationUnionFind<E>(elements: Collection<E>) : AbstractUnionFind<E>() {
+//     private val parentsOrDescendants: MutableMap<E, E> = LinkedHashMap(elements.size, 1.0f)
+//     private val children: MutableMap<E, E> = LinkedHashMap(elements.size, 1.0f)
+//     private val sizes: MutableMap<E, Int> = LinkedHashMap(elements.size, 1.0f)
+//     override val size: Int get() = parentsOrDescendants.size
+//     override val roots: Set<E> get() = sizes.keys.toSet()
+//     override val groupCount: Int get() = sizes.size
+//     init {
+//         for (element in elements) {
+//             parentsOrDescendants[element] = element
+//             children[element] = element
+//             sizes[element] = 1
+//         }
+//     }
+//     override fun iterator(): Iterator<E> {
+//         return parentsOrDescendants.keys.iterator()
+//     }
+//     override fun contains(element: E): Boolean {
+//         return parentsOrDescendants.containsKey(element)
+//     }
+//     fun findRoot(x: E): E {
+//         if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
+//         if (sizes.containsKey(x)) return x
+//         val root = findRoot(parentsOrDescendants.getValue(x))
+//         parentsOrDescendants[x] = root
+//         return root
+//     }
+//     override fun same(x: E, y: E): Boolean {
+//         if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
+//         if (!parentsOrDescendants.containsKey(y)) throw NoSuchElementException("Element $y is missing in the set.")
+//         return findRoot(x) == findRoot(y)
+//     }
+//     override fun unite(x: E, y: E): Boolean {
+//         if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
+//         if (!parentsOrDescendants.containsKey(y)) throw NoSuchElementException("Element $y is missing in the set.")
+//         val xRoot = findRoot(x)
+//         val yRoot = findRoot(y)
+//         if (xRoot == yRoot) return false
+//         val xSize = sizes.getValue(xRoot)
+//         val ySize = sizes.getValue(yRoot)
+//         val parentRoot = if (xSize < ySize) yRoot else xRoot
+//         val childRoot = if (xSize < ySize) xRoot else yRoot
+//         val parentLeaf = parentsOrDescendants.getValue(parentRoot)
+//         val childLeaf = parentsOrDescendants.getValue(childRoot)
+//         children[parentLeaf] = childRoot
+//         parentsOrDescendants[parentRoot] = childLeaf
+//         parentsOrDescendants[childRoot] = parentRoot
+//         sizes[parentRoot] = xSize + ySize
+//         sizes.remove(childRoot)
+//         return true
+//     }
+//     override fun sizeOf(x: E): Int {
+//         if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
+//         return sizes.getValue(findRoot(x))
+//     }
+//     override fun members(x: E): Set<E> {
+//         if (!parentsOrDescendants.containsKey(x)) throw NoSuchElementException("Element $x is missing in the set.")
+//         val members = mutableSetOf<E>()
+//         var member = findRoot(x)
+//         while (children[member] != member) {
+//             members.add(member)
+//             member = children.getValue(member)
+//         }
+//         members.add(member)
+//         return members
+//     }
+//     override fun allGroupMembers(): Map<E, Set<E>> {
+//         val groupMembers = mutableMapOf<E, Set<E>>()
+//         for (root in sizes.keys) {
+//             val members = mutableSetOf<E>()
+//             var member = root
+//             while (children[member] != member) {
+//                 members.add(member)
+//                 member = children.getValue(member)
+//             }
+//             members.add(member)
+//             groupMembers[root] = members
+//         }
+//         return groupMembers
+//     }
 // }
-class IntUnionFind(override val size: Int) : AbstractUnionFind<Int>() {
-    private val ancestersOrSizes = IntArray(size) { -1 }
-    private val parentsOrDescendants = IntArray(size) { -it }
-    private val nextRoots = IntArray(size) { if (it == size - 1) it else it + 1 }
-    private var firstRoot = 0
-    private var _groupCount = size
-    override val roots: Set<Int> get() {
-        val roots = mutableSetOf<Int>()
-        var prevRoot = firstRoot
-        var root = prevRoot
-        roots.add(root)
-        while (nextRoots[root] != root) {
-            root = nextRoots[root]
-            if (root >= 0) {
-                nextRoots[prevRoot] = root
-                prevRoot = root
-                roots.add(root)
-            }
+// // class ImplementationMutableUnionFind<E> : MutableUnionFind<E> {
+// //     private val ancesters: MutableMap<E, E>
+// //     private val descendants: MutableMap<E, E>
+// //     private val sizes: MutableMap<E, Int>
+// //     constructor() {
+// //         ancesters = mutableMapOf<E, E>()
+// //         descendants = mutableMapOf<E, E>()
+// //         sizes = mutableMapOf<E, Int>()
+// //     }
+// // }
+// // abstract class AbstractIntUnionFind() : UnionFind<Int>, AbstractSet<Int>() {
+    
+// // }
+// class IntUnionFind(override val size: Int) : AbstractUnionFind<Int>() {
+//     private val ancestersOrSizes = IntArray(size) { -1 }
+//     private val parentsOrDescendants = IntArray(size) { -it }
+//     private val nextRoots = IntArray(size) { if (it == size - 1) it else it + 1 }
+//     private var firstRoot = 0
+//     private var _groupCount = size
+//     override val roots: Set<Int> get() {
+//         val roots = mutableSetOf<Int>()
+//         var prevRoot = firstRoot
+//         var root = prevRoot
+//         roots.add(root)
+//         while (nextRoots[root] != root) {
+//             root = nextRoots[root]
+//             if (root >= 0) {
+//                 nextRoots[prevRoot] = root
+//                 prevRoot = root
+//                 roots.add(root)
+//             }
             
-        }
-        return roots
-    }
-    override val groupCount: Int get() = _groupCount
-    override fun iterator(): Iterator<Int> {
-        return ancestersOrSizes.indices.iterator()
-    }
-    override fun contains(element: Int): Boolean {
-        return 0 <= element && element < size
-    }
-    fun findRoot(x: Int): Int {
-        checkElementIndex(x, size)
-        if (ancestersOrSizes[x] < 0) return x
-        ancestersOrSizes[x] = findRoot(ancestersOrSizes[x])
-        return ancestersOrSizes[x]
-    }
-    override fun same(x: Int, y: Int): Boolean {
-        checkElementIndex(x, size)
-        checkElementIndex(y, size)
-        return findRoot(x) == findRoot(y)
-    }
-    override fun unite(x: Int, y: Int): Boolean {
-        checkElementIndex(x, size)
-        checkElementIndex(y, size)
-        val xRoot = findRoot(x)
-        val yRoot = findRoot(y)
-        if (xRoot == yRoot) return false
-        val parentRoot = if (-xRoot < -yRoot) yRoot else xRoot
-        val childRoot = if (-xRoot < -yRoot) xRoot else yRoot
-        ancestersOrSizes[parentRoot] += ancestersOrSizes[childRoot]
-        ancestersOrSizes[childRoot] = parentRoot
-        val parentDescendant = -parentsOrDescendants[parentRoot]
-        parentsOrDescendants[parentRoot] = parentsOrDescendants[childRoot]
-        parentsOrDescendants[childRoot] = parentDescendant
-        nextRoots[childRoot] = nextRoots[childRoot].inv()
-        _groupCount--
-        return true
-    }
-    override fun sizeOf(x: Int): Int {
-        checkElementIndex(x, size)
-        return -ancestersOrSizes[findRoot(x)]
-    }
-    override fun members(x: Int): Set<Int> {
-        checkElementIndex(x, size)
-        val root = findRoot(x)
-        val members = mutableSetOf<Int>()
-        for (member in 0 until size) {
-            if (findRoot(member) == root) members.add(member)
-        }
-        return members
-    }
-    override fun allGroupMembers(): Map<Int, Set<Int>> {
-        val groupMembers = mutableMapOf<Int, MutableSet<Int>>()
-        for (member in 0 until size) {
-            val root = findRoot(member)
-            val members = groupMembers.getOrPut(root) { mutableSetOf<Int>() }
-            members.add(member)
-        }
-        return groupMembers
-    }
-}
+//         }
+//         return roots
+//     }
+//     override val groupCount: Int get() = _groupCount
+//     override fun iterator(): Iterator<Int> {
+//         return ancestersOrSizes.indices.iterator()
+//     }
+//     override fun contains(element: Int): Boolean {
+//         return 0 <= element && element < size
+//     }
+//     fun findRoot(x: Int): Int {
+//         checkElementIndex(x, size)
+//         if (ancestersOrSizes[x] < 0) return x
+//         ancestersOrSizes[x] = findRoot(ancestersOrSizes[x])
+//         return ancestersOrSizes[x]
+//     }
+//     override fun same(x: Int, y: Int): Boolean {
+//         checkElementIndex(x, size)
+//         checkElementIndex(y, size)
+//         return findRoot(x) == findRoot(y)
+//     }
+//     override fun unite(x: Int, y: Int): Boolean {
+//         checkElementIndex(x, size)
+//         checkElementIndex(y, size)
+//         val xRoot = findRoot(x)
+//         val yRoot = findRoot(y)
+//         if (xRoot == yRoot) return false
+//         val parentRoot = if (-xRoot < -yRoot) yRoot else xRoot
+//         val childRoot = if (-xRoot < -yRoot) xRoot else yRoot
+//         ancestersOrSizes[parentRoot] += ancestersOrSizes[childRoot]
+//         ancestersOrSizes[childRoot] = parentRoot
+//         val parentDescendant = -parentsOrDescendants[parentRoot]
+//         parentsOrDescendants[parentRoot] = parentsOrDescendants[childRoot]
+//         parentsOrDescendants[childRoot] = parentDescendant
+//         nextRoots[childRoot] = nextRoots[childRoot].inv()
+//         _groupCount--
+//         return true
+//     }
+//     override fun sizeOf(x: Int): Int {
+//         checkElementIndex(x, size)
+//         return -ancestersOrSizes[findRoot(x)]
+//     }
+//     override fun members(x: Int): Set<Int> {
+//         checkElementIndex(x, size)
+//         val root = findRoot(x)
+//         val members = mutableSetOf<Int>()
+//         for (member in 0 until size) {
+//             if (findRoot(member) == root) members.add(member)
+//         }
+//         return members
+//     }
+//     override fun allGroupMembers(): Map<Int, Set<Int>> {
+//         val groupMembers = mutableMapOf<Int, MutableSet<Int>>()
+//         for (member in 0 until size) {
+//             val root = findRoot(member)
+//             val members = groupMembers.getOrPut(root) { mutableSetOf<Int>() }
+//             members.add(member)
+//         }
+//         return groupMembers
+//     }
+// }
 open class ArraySegmentTree<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : AbstractList<E>() {
     private val node: MutableList<E> // How to use Array<E>?
     // private val node = MutableList(size.shl(1)) { identity }
