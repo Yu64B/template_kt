@@ -64,7 +64,8 @@ fun PrintWriter.solve() {
     // println(br.readLine())
 
     val N = 2000000
-    val iuf = ImplementationUnionFind((0 until N).toList())
+    // val iuf = ImplementationUnionFind((0 until N).toList())
+    val iuf = IntUnionFind(N)
     var ans = 0L
     for (i in 0 until N) {
         if (iuf.contains(i)) ans++
@@ -222,73 +223,78 @@ val iterableComparator = Comparator<Iterable<Comparable<*>>> { a, b ->
 val pairComparator = Comparator<Pair<Comparable<*>, Comparable<*>>> { a, b -> 
     if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
 }
-interface UnionFind<E> : Set<E> {
+interface DisjointSet<E> : Set<E> {
     val roots: Set<E>
-    val groupCount: Int
+    val allSubsets: Map<E, Set<E>>
+    val subsetCount: Int
+    fun find(x: E): E
     fun same(x: E, y: E): Boolean
-    fun unite(x: E, y: E): Boolean
+    fun union(x: E, y: E): Boolean
     fun sizeOf(x: E): Int
-    fun members(x: E): Set<E>
-    fun allGroupMembers(): Map<E, Set<E>>
+    fun subset(x: E): Set<E>
+    // fun allSubsets(): Map<E, Set<E>>
 }
-class IntUnionFind(val n: Int) : UnionFind<Int> {
-    val parents = IntArray(n) { -1 } // 親の番号 (-1で初期化)
-    val roots = (0 until n).toMutableSet()
-    var groups = n // 集合の個数
+typealias UnionFind<E> = DisjointSet<E>
+class IntDisjointSet(override val size: Int) : DisjointSet<Int>, AbstractSet<Int>() {
+    val parentsOrSizes = IntArray(size) { -1 } // 親の番号 (-1で初期化)
+    // val _roots = (0 until size).toMutableSet()
+    // override val roots get() = _roots.toSet()
+    override val roots get(): Set<Int> {
+        return (0 until size).filter { parentsOrSizes[it] < 0 }.toSet()
+    }
+    override fun iterator(): Iterator<Int> {
+        return (0 until size).iterator()
+    }
+    override fun contains(element: Int): Boolean {
+        return (0 until size).contains(element)
+    }
+    override val allSubsets get(): Map<Int, Set<Int>> {
+        val allSubsets = mutableMapOf<Int, MutableSet<Int>>()
+        for (member in 0 until size) {
+            val root = find(member)
+            allSubsets.getOrPut(root) { mutableSetOf() }.add(member)
+        }
+        return allSubsets
+    }
+    var _subsetCount = size // 集合の個数
+    override val subsetCount get() = _subsetCount
     // 木の根を求める
-    fun findRoot(x: Int): Int {
-        if (parents[x] < 0) return x // 根
+    override fun find(x: Int): Int {
+        if (parentsOrSizes[x] < 0) return x // 根
         else {
-            parents[x] = findRoot(parents[x]) // 経路圧縮
-            return parents[x]
+            parentsOrSizes[x] = find(parentsOrSizes[x]) // 経路圧縮
+            return parentsOrSizes[x]
         }
     }
     // xとyが同じ集合に属するか否か
-    fun same(x: Int, y: Int): Boolean {
-        return findRoot(x) == findRoot(y)
+    override fun same(x: Int, y: Int): Boolean {
+        return find(x) == find(y)
     }
     // xとyの属する集合を併合
-    fun unite(x: Int, y: Int) {
-        var xRoot = findRoot(x)
-        var yRoot = findRoot(y)
-        if (xRoot == yRoot) return
+    override fun union(x: Int, y: Int): Boolean {
+        var xRoot = find(x)
+        var yRoot = find(y)
+        if (xRoot == yRoot) return false
         if (xRoot > yRoot) { // yの属する集合のほうが大きかったら
             val tmp = xRoot
             xRoot = yRoot
             yRoot = tmp
         }
-        parents[xRoot] += parents[yRoot]
-        parents[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
-        groups--
-        roots.remove(yRoot)
+        parentsOrSizes[xRoot] += parentsOrSizes[yRoot]
+        parentsOrSizes[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
+        _subsetCount--
+        // _roots.remove(yRoot)
+        return true
     }
-    fun size(): Int {
-        return n
+    override fun sizeOf(x: Int): Int {
+        return -parentsOrSizes[find(x)]
     }
-    fun sizeOf(x: Int): Int {
-        return -parents[findRoot(x)]
-    }
-    fun groupCount(): Int {
-        return groups
-    }
-    fun members(x: Int): List<Int> {
-        val root = findRoot(x)
-        return (0 until n).filter { findRoot(it) == root }
-    }
-    fun roots(): List<Int> {
-        return parents.withIndex().filter { it.value < 0 }.map { it.index }
-    }
-    fun allGroupMembers(): Map<Int, List<Int>> {
-        val groupMembers = mutableMapOf<Int, MutableList<Int>>()
-        for (member in 0 until n) {
-            val root = findRoot(member)
-            val members = groupMembers[root]
-            if (members == null) groupMembers[root] = mutableListOf(member)
-            else members.add(member)
-        }
-        return groupMembers
+    override fun subset(x: Int): Set<Int> {
+        val root = find(x)
+        return (0 until size).filter { find(it) == root }.toSet()
     }
 }
+typealias IntUnionFind = IntDisjointSet
 // interface MutableUnionFind<E> : UnionFind<E>, MutableSet<E>
 // abstract class AbstractUnionFind<E>() : UnionFind<E>, AbstractSet<E>() {
 //     internal fun checkElementIndex(index: Int, size: Int) {
