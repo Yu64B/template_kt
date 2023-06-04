@@ -236,7 +236,7 @@ interface DisjointSet<E> : Set<E> {
 }
 typealias UnionFind<E> = DisjointSet<E>
 class IntDisjointSet(override val size: Int) : DisjointSet<Int>, AbstractSet<Int>() {
-    val parentsOrSizes = IntArray(size) { -1 } // 親の番号 (-1で初期化)
+    val parentsOrSizes = IntArray(size) { -1 }
     // val _roots = (0 until size).toMutableSet()
     // override val roots get() = _roots.toSet()
     override val roots get(): Set<Int> {
@@ -256,32 +256,29 @@ class IntDisjointSet(override val size: Int) : DisjointSet<Int>, AbstractSet<Int
         }
         return allSubsets
     }
-    var _subsetCount = size // 集合の個数
+    var _subsetCount = size
     override val subsetCount get() = _subsetCount
-    // 木の根を求める
     override fun find(x: Int): Int {
-        if (parentsOrSizes[x] < 0) return x // 根
+        if (parentsOrSizes[x] < 0) return x
         else {
-            parentsOrSizes[x] = find(parentsOrSizes[x]) // 経路圧縮
+            parentsOrSizes[x] = find(parentsOrSizes[x])
             return parentsOrSizes[x]
         }
     }
-    // xとyが同じ集合に属するか否か
     override fun same(x: Int, y: Int): Boolean {
         return find(x) == find(y)
     }
-    // xとyの属する集合を併合
     override fun union(x: Int, y: Int): Boolean {
         var xRoot = find(x)
         var yRoot = find(y)
         if (xRoot == yRoot) return false
-        if (xRoot > yRoot) { // yの属する集合のほうが大きかったら
+        if (xRoot > yRoot) {
             val tmp = xRoot
             xRoot = yRoot
             yRoot = tmp
         }
         parentsOrSizes[xRoot] += parentsOrSizes[yRoot]
-        parentsOrSizes[yRoot] = xRoot // このとき子孫は変更しない (findRoot()で更新)
+        parentsOrSizes[yRoot] = xRoot
         _subsetCount--
         // _roots.remove(yRoot)
         return true
