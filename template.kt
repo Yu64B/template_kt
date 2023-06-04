@@ -1005,7 +1005,7 @@ fun binarySearch(from: Int = Int.MIN_VALUE, to: Int = Int.MAX_VALUE, predicate: 
     val fromResult = predicate(from)
     val toResult = predicate(to)
     if (fromResult && toResult) {
-        return from
+        return to
     }
     if (!fromResult && !toResult) {
         return null
@@ -1153,13 +1153,17 @@ class IntCppRope() : AbstractMutableList<Int>() {
     }
 }
 // import java.util.PriorityQueue
-class ArrayIntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<Int, V>> {
+interface IntGraph<V> : List<Map<Int, V>> {
+    val vertices: Iterable<V>
+    
+}
+class IntSimpleWightedDirectedGraph<V> : AbstractList<Map<Int, V>> {
     override val size: Int
     private val graph: List<MutableMap<Int, V>>
     val vertices: IntRange get() = graph.indices
     constructor(size: Int) {
         this.size = size
-        graph = List(size) { mutableMapOf<Int, V>() }
+        graph = List(size) { mutableMapOf() }
     }
     constructor(graph: Collection<Map<Int, V>>) {
         this.size = graph.size
@@ -1174,7 +1178,7 @@ class ArrayIntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<In
             graph[from][to] = weight
         }
     }
-    override fun get(index: Int): MutableMap<Int, V> {
+    override fun get(index: Int): Map<Int, V> {
         return graph.get(index)
     }
     fun containsEdge(from: Int, to: Int): Boolean {
@@ -1200,8 +1204,8 @@ class ArrayIntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<In
         toRangeCheck(to)
         return graph[from].remove(to)
     }
-    fun toGraph(): ArrayIntWightedSimpleGraph<V> {
-        return ArrayIntWightedSimpleGraph(this)
+    fun toGraph(): IntSimpleWightedDirectedGraph<V> {
+        return IntSimpleWightedDirectedGraph(this)
     }
     private fun fromRangeCheck(from: Int) {
         when {
@@ -1221,14 +1225,46 @@ class ArrayIntWightedSimpleGraph<V : Comparable<V>> : AbstractList<MutableMap<In
             source > size -> throw IndexOutOfBoundsException("source ($source) is greater than size ($size).")
         }
     }
+    // fun dijkstra(source: Int): Pair<List<V?>, List<Int?>> {
+    //     sourceRangeCheck(source)
+    //     val distances = MutableList<V?>(size) { null }
+    //     val previouses = MutableList<Int?>(size) { null }
+    //     val queue = PriorityQueue<Pair<V, Int>>() { a, b ->
+    //         if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
+    //     }
+    //     for ((to, length) in get(source)) {
+    //         distances[to] = length
+    //         previouses[to] = source
+    //         queue.add(Pair(length, to))
+    //     }
+    //     val fixed = BooleanArray(size)
+    //     fixed[source] = true
+    //     while (queue.isNotEmpty()) {
+    //         val (distanceToFrom, from) = queue.poll()
+    //         if (fixed[from]) continue
+    //         fixed[from] = true
+    //         for ((to, length) in get(from)) {
+    //             if (fixed[to]) continue
+    //             val alternative = distanceToFrom + length
+    //             val distanceToTo = distances[to]
+    //             if (distanceToTo == null || alternative < distanceToTo) {
+    //                 distances[to] = alternative
+    //                 previouses[to] = from
+    //                 queue.add(Pair(alternative, to))
+    //             }
+    //         }
+    //     }
+    //     return Pair(distances, previouses)
+    // }
 }
-fun ArrayIntWightedSimpleGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
+fun IntSimpleWightedDirectedGraph<Long>.dijkstra(source: Int): Pair<List<Long?>, List<Int?>> {
     sourceRangeCheck(source)
     val distances = MutableList<Long?>(size) { null }
     val previouses = MutableList<Int?>(size) { null }
-    val queue = PriorityQueue<Pair<Long, Int>>() { a, b -> 
+    val queue = PriorityQueue<Pair<Long, Int>>() { a, b ->
         if (a.first != b.first) compareValues(a.first, b.first) else compareValues(a.second, b.second)
     }
+    distances[source] = 0L
     for ((to, length) in get(source)) {
         distances[to] = length
         previouses[to] = source
