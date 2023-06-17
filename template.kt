@@ -136,8 +136,8 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
     for (element in this) for (i in 0 until element.second) result.add(element.first)
     return result
 }
-// 動作未確認
-fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
+// 理論未確認
+fun <T> Iterable<T>.combinations(r: Int) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = count()
     if (r > n) return@sequence
@@ -151,8 +151,8 @@ fun <T> Iterable<T>.combinations(r: Int = count()) = sequence {
         yield(indices.map { elementAt(it) })
     }
 }
-// 動作未確認
-fun CharSequence.combinations(r: Int = length) = sequence {
+// 理論未確認
+fun CharSequence.combinations(r: Int) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = length
     if (r > n) return@sequence
@@ -166,7 +166,7 @@ fun CharSequence.combinations(r: Int = length) = sequence {
         yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
     }
 }
-// 動作未確認
+// 理論未確認
 fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = count()
@@ -191,8 +191,8 @@ fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
         }
     }
 }
-// 動作未確認
-fun CharSequence.permutations(r: Int = count()) = sequence {
+// 理論未確認
+fun CharSequence.permutations(r: Int = length) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = length
     if (r > n) return@sequence
@@ -232,21 +232,15 @@ interface DisjointSet<E> : Set<E> {
     fun union(x: E, y: E): Boolean
     fun sizeOf(x: E): Int
     fun subset(x: E): Set<E>
-    // fun allSubsets(): Map<E, Set<E>>
 }
 typealias UnionFind<E> = DisjointSet<E>
 class IntDisjointSet(override val size: Int) : DisjointSet<Int>, AbstractSet<Int>() {
-    val parentsOrSizes = IntArray(size) { -1 }
-    // val _roots = (0 until size).toMutableSet()
+    private val parentsOrSizes = IntArray(size) { -1 }
+    // private val _roots = (0 until size).toMutableSet()
+    private var _subsetCount = size
     // override val roots get() = _roots.toSet()
     override val roots get(): Set<Int> {
         return (0 until size).filter { parentsOrSizes[it] < 0 }.toSet()
-    }
-    override fun iterator(): Iterator<Int> {
-        return (0 until size).iterator()
-    }
-    override fun contains(element: Int): Boolean {
-        return (0 until size).contains(element)
     }
     override val allSubsets get(): Map<Int, Set<Int>> {
         val allSubsets = mutableMapOf<Int, MutableSet<Int>>()
@@ -256,8 +250,13 @@ class IntDisjointSet(override val size: Int) : DisjointSet<Int>, AbstractSet<Int
         }
         return allSubsets
     }
-    var _subsetCount = size
     override val subsetCount get() = _subsetCount
+    override fun iterator(): Iterator<Int> {
+        return (0 until size).iterator()
+    }
+    override fun contains(element: Int): Boolean {
+        return (0 until size).contains(element)
+    }
     override fun find(x: Int): Int {
         if (parentsOrSizes[x] < 0) return x
         else {
@@ -1149,6 +1148,7 @@ class IntCppRope() : AbstractMutableList<Int>() {
         return 0
     }
 }
+// 未完成
 // import java.util.PriorityQueue
 interface IntGraph<V> : List<Map<Int, V>> {
     val vertices: Iterable<V>
