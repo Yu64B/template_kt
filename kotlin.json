@@ -53,17 +53,17 @@
 		"description": "Read long"
 	},
 	"Read string list": {
-		"prefix": ["stringlist", "read", "readLine()!!"],
+		"prefix": ["strings", "read", "readLine()!!"],
 		"body": "reader.readLine()!!.split(' ')",
 		"description": "Read string list"
 	},
 	"Read int list": {
-		"prefix": ["intlist", "read", "readLine()!!"],
+		"prefix": ["ints", "read", "readLine()!!"],
 		"body": "reader.readLine()!!.split(' ').map { it.toInt() }",
 		"description": "Read int list"
 	},
 	"Read long list": {
-		"prefix": ["longlist", "read", "readLine()!!"],
+		"prefix": ["longs", "read", "readLine()!!"],
 		"body": "reader.readLine()!!.split(' ').map { it.toLong() }",
 		"description": "Read long list"
 	},
