@@ -73,29 +73,8 @@ fun PrintWriter.solve() {
     println(ans)
 }
 val DEBUG = true
-fun debug(message: Any?) { if (DEBUG) print(message) }
-fun debug(message: Int) { if (DEBUG) print(message) }
-fun debug(message: Long) { if (DEBUG) print(message) }
-fun debug(message: Byte) { if (DEBUG) print(message) }
-fun debug(message: Short) { if (DEBUG) print(message) }
-fun debug(message: Char) { if (DEBUG) print(message) }
-fun debug(message: Boolean) { if (DEBUG) print(message) }
-fun debug(message: Float) { if (DEBUG) print(message) }
-fun debug(message: Double) { if (DEBUG) print(message) }
-fun debug(message: CharArray) { if (DEBUG) print(message) }
-fun debug(message: String) { if (DEBUG) print(message) }
-fun debugln() { if (DEBUG) println() }
-fun debugln(message: Any?) { if (DEBUG) println(message) }
-fun debugln(message: Int) { if (DEBUG) println(message) }
-fun debugln(message: Long) { if (DEBUG) println(message) }
-fun debugln(message: Byte) { if (DEBUG) println(message) }
-fun debugln(message: Short) { if (DEBUG) println(message) }
-fun debugln(message: Char) { if (DEBUG) println(message) }
-fun debugln(message: Boolean) { if (DEBUG) println(message) }
-fun debugln(message: Float) { if (DEBUG) println(message) }
-fun debugln(message: Double) { if (DEBUG) println(message) }
-fun debugln(message: CharArray) { if (DEBUG) println(message) }
-fun debugln(message: String) { if (DEBUG) println(message) }
+fun debug() { if (DEBUG) System.err.println() }
+fun debug(message: Any?) { if (DEBUG) System.err.println(message.toString()) }
 fun <T> Iterable<T>.runLengthEncode(): List<Pair<T, Int>> {
     val result = ArrayList<Pair<T, Int>>()
     val iterator = iterator()
@@ -291,6 +270,8 @@ class IntDisjointSet(override val size: Int) : DisjointSet<Int>, AbstractSet<Int
     }
 }
 typealias IntUnionFind = IntDisjointSet
+fun DisjointSet(size: Int): DisjointSet<Int> = IntDisjointSet(size)
+fun UnionFind(size: Int): UnionFind<Int> = IntUnionFind(size)
 // interface MutableUnionFind<E> : UnionFind<E>, MutableSet<E>
 // abstract class AbstractUnionFind<E>() : UnionFind<E>, AbstractSet<E>() {
 //     internal fun checkElementIndex(index: Int, size: Int) {
@@ -715,23 +696,24 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
     }
     override fun iterator(): MutableIterator<E> {
         val iterator = indexes.iterator()
-        var nextValue: E? = null
+        var currentValue: E? = null
         return object : MutableIterator<E> {
             override fun hasNext(): Boolean {
                 return iterator.hasNext()
             }
             override fun next(): E {
-                return iterator.next().key.also { nextValue = it }
+                return iterator.next().key.also { currentValue = it }
             }
             // 動作未確認
             override fun remove() {
-                if (nextValue == null) {
+                val value = currentValue
+                if (value == null) {
                     throw IllegalStateException()
                 }
-                val index = indexes[nextValue]
+                val index = indexes[value]
                 removeFromList(index!!)
                 iterator.remove()
-                nextValue = null
+                currentValue = null
             }
         }
     }
