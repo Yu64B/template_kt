@@ -7,6 +7,8 @@ import java.io.InputStreamReader
 import java.io.BufferedReader
 import java.util.PriorityQueue
 import java.io.PrintWriter
+import java.time.Instant
+import java.time.Duration
 fun main() {
     var error: Throwable? = null
     val thread = Thread(null, ::runner, "runner", 128L * 1024 * 1024)
@@ -20,6 +22,8 @@ fun runner() {
     writer.solve()
     writer.close()
 }
+val startTime = Instant.now()
+val timeLimit = startTime + Duration.ofMillis(1700)
 fun PrintWriter.solve() {
     val reader = System.`in`.bufferedReader()
     // val (H, W) = reader.readLine()!!.split(' ').map { it.toInt() }
@@ -72,9 +76,41 @@ fun PrintWriter.solve() {
     }
     println(ans)
 }
-val DEBUG = true
-fun debug() { if (DEBUG) System.err.println() }
-fun debug(message: Any?) { if (DEBUG) System.err.println(message.toString()) }
+class Debugger(val debugging: Boolean = true) {
+    fun print(message: Any?) {
+        if (debugging) System.err.print(message)
+    }
+    fun println() {
+        if (debugging) System.err.println()
+    }
+    fun println(message: Any?) {
+        if (debugging) System.err.println(message)
+    }
+    fun assert(value: Boolean) {
+        if (debugging) assert(value)
+    }
+    fun assert(value: Boolean, lazyMessage: () -> Any) {
+        if (debugging) assert(value, lazyMessage)
+    }
+    fun check(value: Boolean) {
+        if (debugging) check(value)
+    }
+    fun check(value: Boolean, lazyMessage: () -> Any) {
+        if (debugging) check(value, lazyMessage)
+    }
+    fun require(value: Boolean) {
+        if (debugging) require(value)
+    }
+    fun require(value: Boolean, lazyMessage: () -> Any) {
+        if (debugging) require(value, lazyMessage)
+    }
+    inline fun debug(block: () -> Any) {
+        if (debugging) block()
+    }
+}
+// val DEBUG = true
+// fun debug() { if (DEBUG) System.err.println() }
+// fun debug(message: Any?) { if (DEBUG) System.err.println(message.toString()) }
 fun <T> Iterable<T>.runLengthEncode(): List<Pair<T, Int>> {
     val result = ArrayList<Pair<T, Int>>()
     val iterator = iterator()
