@@ -771,7 +771,7 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
     }
 }
 fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {
-    return RandomizedSet<T>().also { for (item in this) it.add(item) }
+    return RandomizedSet<T>().also { it.addAll(this) }
 }
 public fun <T : Comparable<T>> Iterable<T>.maxOrNull(): T? {
     val iterator = iterator()
