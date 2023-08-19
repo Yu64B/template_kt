@@ -24,6 +24,7 @@ fun runner() {
 }
 val startTime = Instant.now()
 val timeLimit = startTime + Duration.ofMillis(1700)
+val dbg = Debugger()
 fun PrintWriter.solve() {
     val reader = System.`in`.bufferedReader()
     // val (H, W) = reader.readLine()!!.split(' ').map { it.toInt() }
@@ -87,30 +88,27 @@ class Debugger(val debugging: Boolean = true) {
         if (debugging) System.err.println(message)
     }
     fun assert(value: Boolean) {
-        if (debugging) assert(value)
+        if (debugging) kotlin.assert(value)
     }
     fun assert(value: Boolean, lazyMessage: () -> Any) {
-        if (debugging) assert(value, lazyMessage)
+        if (debugging) kotlin.assert(value, lazyMessage)
     }
     fun check(value: Boolean) {
-        if (debugging) check(value)
+        if (debugging) kotlin.check(value)
     }
     fun check(value: Boolean, lazyMessage: () -> Any) {
-        if (debugging) check(value, lazyMessage)
+        if (debugging) kotlin.check(value, lazyMessage)
     }
     fun require(value: Boolean) {
-        if (debugging) require(value)
+        if (debugging) kotlin.require(value)
     }
     fun require(value: Boolean, lazyMessage: () -> Any) {
-        if (debugging) require(value, lazyMessage)
+        if (debugging) kotlin.require(value, lazyMessage)
     }
     inline fun debug(block: () -> Any) {
         if (debugging) block()
     }
 }
-// val DEBUG = true
-// fun debug() { if (DEBUG) System.err.println() }
-// fun debug(message: Any?) { if (DEBUG) System.err.println(message.toString()) }
 fun <T> Iterable<T>.runLengthEncode(): List<Pair<T, Int>> {
     val result = ArrayList<Pair<T, Int>>()
     val iterator = iterator()
