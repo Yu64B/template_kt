@@ -76,18 +76,6 @@ fun PrintWriter.solve() {
     }
     println(ans)
 }
-fun BufferedReader.string(): String = readLine()!!
-fun BufferedReader.int(): Int = readLine()!!.toInt()
-fun BufferedReader.long(): Long = readLine()!!.toLong()
-fun BufferedReader.stringList(): List<String> = readLine()!!.split(' ')
-fun BufferedReader.intList(): List<Int> = readLine()!!.split(' ').map { it.toInt() }
-fun BufferedReader.longList(): List<Long> = readLine()!!.split(' ').map { it.toLong() }
-fun BufferedReader.stringLines(size: Int): List<String> = Array(size) { readLine()!! }.asList()
-fun BufferedReader.intLines(size: Int): List<Int> = IntArray(size) { readLine()!!.toInt() }.asList()
-fun BufferedReader.longLines(size: Int): List<Long> = LongArray(size) { readLine()!!.toLong() }.asList()
-fun BufferedReader.stringListLines(size: Int): List<List<String>> = Array<List<String>>(size) { readLine()!!.split(' ') }.asList()
-fun BufferedReader.intListLines(size: Int): List<List<Int>> = Array<List<Int>>(size) { readLine()!!.split(' ').map { it.toInt() } }.asList()
-fun BufferedReader.longListLines(size: Int): List<List<Long>> = Array<List<Long>>(size) { readLine()!!.split(' ').map { it.toLong() } }.asList()
 class Debugger(val debugging: Boolean = true) {
     fun print(message: Any?) {
         if (debugging) System.err.print(message)
