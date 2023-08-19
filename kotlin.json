@@ -507,7 +507,7 @@
 			"\t}",
 			"}",
 			"fun <T> Iterable<T>.toRandomizedSet(): RandomizedSet<T> {",
-			"\treturn RandomizedSet<T>().also { for (item in this) it.add(item) }",
+			"\treturn RandomizedSet<T>().also { it.addAll(this) }",
 			"}",
 			""
 		],
