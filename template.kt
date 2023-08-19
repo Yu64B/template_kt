@@ -149,7 +149,7 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
     for (element in this) for (i in 0 until element.second) result.add(element.first)
     return result
 }
-// 理論未確認
+// 動作未確認
 fun <T> Iterable<T>.combinations(r: Int) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = count()
@@ -164,7 +164,7 @@ fun <T> Iterable<T>.combinations(r: Int) = sequence {
         yield(indices.map { elementAt(it) })
     }
 }
-// 理論未確認
+// 動作未確認
 fun CharSequence.combinations(r: Int) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = length
@@ -179,7 +179,7 @@ fun CharSequence.combinations(r: Int) = sequence {
         yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
     }
 }
-// 理論未確認
+// 動作未確認
 fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = count()
@@ -204,7 +204,7 @@ fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
         }
     }
 }
-// 理論未確認
+// 動作未確認
 fun CharSequence.permutations(r: Int = length) = sequence {
     require(r >= 0) { "r must be non-negative." }
     val n = length
@@ -740,12 +740,11 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
             }
             // 動作未確認
             override fun remove() {
-                val value = currentValue
-                if (value == null) {
+                if (currentValue == null) {
                     throw IllegalStateException()
                 }
-                val index = indexes[value]
-                removeFromList(index!!)
+                val index = indexes[currentValue]!!
+                removeFromList(index)
                 iterator.remove()
                 currentValue = null
             }
@@ -764,8 +763,7 @@ class RandomizedSet<E>(private val random: Random = XorShiftRandom()) : Abstract
         val lastElement = values.last()
         values[index] = lastElement
         indexes[lastElement] = index
-        // values.removeLast()
-        values.removeAt(values.lastIndex)
+        values.removeLast()
     }
     fun getRandom(): E {
         val randomIndex = random.nextInt(size)
