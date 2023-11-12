@@ -6,6 +6,9 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.BufferedReader
 import java.util.PriorityQueue
+import java.util.SortedSet
+import java.util.TreeSet
+import java.util.AbstractMap
 import java.io.PrintWriter
 import java.time.Instant
 import java.time.Duration
@@ -1299,4 +1302,78 @@ fun IntSimpleWightedDirectedGraph<Long>.dijkstra(source: Int): Pair<List<Long?>,
         }
     }
     return Pair(distances, previouses)
+}
+// class ValueSortedMap<K, V : Comparable<V>> : AbstractMutableMap<K, V>() {
+//     private val set: java.util.SortedSet<MutableMap.MutableEntry<K, V>> = java.util.TreeSet()
+//     private val map: MutableMap<K, V> = LinkedHashMap()
+//     override val entries get(): MutableSet<MutableMap.MutableEntry<K, V>> = object : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
+//         override val size get(): Int = set.size
+//         override fun add(element: MutableMap.MutableEntry<K, V>): Boolean = throw UnsupportedOperationException("Add is not supported on entries")
+//         override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> = set.iterator()
+//     }
+//     override fun put(key: K, value: V): V? {
+//         return map.put(key, value).also {
+//             if (it != value) {
+//                 set.remove(java.util.AbstractMap.SimpleEntry(key, it))
+//                 set.add(java.util.AbstractMap.SimpleEntry(key, value))
+//             }
+//         }
+//     }
+// }
+// import java.util.SortedSet
+// import java.util.TreeSet
+// import java.util.AbstractMap
+// 動作未確認
+class ValueSortedMap<K, V : Comparable<V>> : AbstractMutableMap<K, V>() {
+    private val set: SortedSet<MutableMap.MutableEntry<K, V>> = TreeSet(compareBy { it.value })
+    private val map: MutableMap<K, MutableMap.MutableEntry<K, V>> = HashMap()
+    override val entries: MutableSet<MutableMap.MutableEntry<K, V>> get() {
+        return object : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
+            override val size: Int get() = set.size
+            override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
+                throw UnsupportedOperationException()
+            }
+            override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> {
+                val iterator = set.iterator()
+                var currentKey: K? = null
+                return object : MutableIterator<MutableMap.MutableEntry<K, V>> {
+                    override fun hasNext(): Boolean {
+                        return iterator.hasNext()
+                    }
+                    override fun next(): MutableMap.MutableEntry<K, V> {
+                        return iterator.next().also { currentKey = it.key }
+                    }
+                    override fun remove() {
+                        iterator.remove()
+                        map.remove(currentKey)
+                        currentKey = null
+                    }
+                }
+            }
+        }
+    }
+    override fun put(key: K, value: V): V? {
+        val entry = map[key]
+        if (entry == null) {
+            val newEntry: MutableMap.MutableEntry<K, V> = object : AbstractMap.SimpleEntry<K, V>(key, value) {
+                override fun setValue(newValue: V): V {
+                    if (super.value != newValue) {
+                        set.remove(this)
+                        return super.setValue(value).also {
+                            set.add(this)
+                        }
+                    }
+                    else {
+                        return super.setValue(value)
+                    }
+                }
+            }
+            set.add(newEntry)
+            map.put(key, newEntry)
+            return null
+        }
+        else {
+            return entry.setValue(value)
+        }
+    }
 }
