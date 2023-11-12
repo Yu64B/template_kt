@@ -75,33 +75,33 @@
 		"description": "Template"
 	},
 	"Read string": {
-		"prefix": ["string", "read", "readln()"],
-		"body": "reader.readln()",
+		"prefix": ["string", "read", "readLine()!!"],
+		"body": "reader.readLine()!!",
 		"description": "Read string"
 	},
 	"Read int": {
-		"prefix": ["int", "read", "readln()"],
-		"body": "reader.readln().toInt()",
+		"prefix": ["int", "read", "readLine()!!"],
+		"body": "reader.readLine()!!.toInt()",
 		"description": "Read int"
 	},
 	"Read long": {
-		"prefix": ["long", "read", "readln()"],
-		"body": "reader.readln().toLong()",
+		"prefix": ["long", "read", "readLine()!!"],
+		"body": "reader.readLine()!!.toLong()",
 		"description": "Read long"
 	},
 	"Read string list": {
-		"prefix": ["strings", "read", "readln()"],
-		"body": "reader.readln().split(' ')",
+		"prefix": ["strings", "read", "readLine()!!"],
+		"body": "reader.readLine()!!.split(' ')",
 		"description": "Read string list"
 	},
 	"Read int list": {
-		"prefix": ["ints", "read", "readln()"],
-		"body": "reader.readln().split(' ').map { it.toInt() }",
+		"prefix": ["ints", "read", "readLine()!!"],
+		"body": "reader.readLine()!!.split(' ').map { it.toInt() }",
 		"description": "Read int list"
 	},
 	"Read long list": {
-		"prefix": ["longs", "read", "readln()"],
-		"body": "reader.readln().split(' ').map { it.toLong() }",
+		"prefix": ["longs", "read", "readLine()!!"],
+		"body": "reader.readLine()!!.split(' ').map { it.toLong() }",
 		"description": "Read long list"
 	},
 	"Run length encode for iteralbe": {
