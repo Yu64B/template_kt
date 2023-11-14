@@ -152,21 +152,21 @@ fun <T> Iterable<Pair<T, Int>>.runLengthDecode(): List<T> {
     for (element in this) for (i in 0 until element.second) result.add(element.first)
     return result
 }
-// 動作未確認
-fun <T> Iterable<T>.combinations(r: Int) = sequence {
-    require(r >= 0) { "r must be non-negative." }
-    val n = count()
-    if (r > n) return@sequence
-    val indices = IntArray(r) { it }
-    yield(indices.map { elementAt(it) })
-    while (true) {
-        val i = (r - 1 downTo 0).firstOrNull { indices[it] != it + n - r }
-        if (i == null) return@sequence
-        indices[i]++
-        for (j in i + 1 until r) indices[j] = indices[j - 1] + 1
-        yield(indices.map { elementAt(it) })
-    }
-}
+// // 動作未確認
+// fun <T> Iterable<T>.combinations(r: Int) = sequence {
+//     require(r >= 0) { "r must be non-negative." }
+//     val n = count()
+//     if (r > n) return@sequence
+//     val indices = IntArray(r) { it }
+//     yield(indices.map { elementAt(it) })
+//     while (true) {
+//         val i = (r - 1 downTo 0).firstOrNull { indices[it] != it + n - r }
+//         if (i == null) return@sequence
+//         indices[i]++
+//         for (j in i + 1 until r) indices[j] = indices[j - 1] + 1
+//         yield(indices.map { elementAt(it) })
+//     }
+// }
 // 動作未確認
 fun CharSequence.combinations(r: Int) = sequence {
     require(r >= 0) { "r must be non-negative." }
@@ -182,31 +182,31 @@ fun CharSequence.combinations(r: Int) = sequence {
         yield(StringBuilder(r).also { for (k in indices) it.append(get(k)) }.toString())
     }
 }
-// 動作未確認
-fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
-    require(r >= 0) { "r must be non-negative." }
-    val n = count()
-    if (r > n) return@sequence
-    val indices = IntArray(n) { it }
-    val cycles = IntArray(r) { n - it }
-    yield(indices.asList().subList(0, r).map { elementAt(it) })
-    while (n != 0) {
-        for (i in r - 1 downTo 0) {
-            cycles[i]--
-            if (cycles[i] == 0) {
-                indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
-                cycles[i] = n - i
-            }
-            else {
-                val j = cycles[i]
-                indices[n - j] = indices[i].also { indices[i] = indices[n - j] }
-                yield(indices.asList().subList(0, r).map { elementAt(it) })
-                break
-            }
-            if (i == 0) return@sequence
-        }
-    }
-}
+// // 動作未確認
+// fun <T> Iterable<T>.permutations(r: Int = count()) = sequence {
+//     require(r >= 0) { "r must be non-negative." }
+//     val n = count()
+//     if (r > n) return@sequence
+//     val indices = IntArray(n) { it }
+//     val cycles = IntArray(r) { n - it }
+//     yield(indices.asList().subList(0, r).map { elementAt(it) })
+//     while (n != 0) {
+//         for (i in r - 1 downTo 0) {
+//             cycles[i]--
+//             if (cycles[i] == 0) {
+//                 indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
+//                 cycles[i] = n - i
+//             }
+//             else {
+//                 val j = cycles[i]
+//                 indices[n - j] = indices[i].also { indices[i] = indices[n - j] }
+//                 yield(indices.asList().subList(0, r).map { elementAt(it) })
+//                 break
+//             }
+//             if (i == 0) return@sequence
+//         }
+//     }
+// }
 // 動作未確認
 fun CharSequence.permutations(r: Int = length) = sequence {
     require(r >= 0) { "r must be non-negative." }
@@ -1376,4 +1376,49 @@ class ValueSortedMap<K, V : Comparable<V>> : AbstractMutableMap<K, V>() {
             return entry.setValue(value)
         }
     }
+}
+fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> = sequence {
+    require(r >= 0) { "r must be non-negative." }
+    val list = this@combinations.toMutableList().asReversed()
+    if (r > list.size) return@sequence
+    list.reverse()
+    val result = mutableListOf<T>()
+    fun dfs(r: Int): Sequence<List<T>> = sequence {
+        if (r == 0) {
+            yield(result)
+        }
+        else if (list.size == r) {
+            result.add(list.removeFirst())
+            yieldAll(dfs(r - 1))
+            list.add(0, result.removeLast())
+        }
+        else {
+            val element = list.removeFirst()
+            result.add(element)
+            yieldAll(dfs(r - 1))
+            result.removeLast()
+            yieldAll(dfs(r))
+            list.add(0, element)
+        }
+    }
+    yieldAll(dfs(r))
+}
+fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> = sequence {
+    require(r >= 0) { "r must be non-negative." }
+    val list = this@permutations.toMutableList()
+    if (r > list.size) return@sequence
+    val result = mutableListOf<T>()
+    fun dfs(r: Int): Sequence<List<T>> = sequence {
+        if (r == 0) {
+            yield(result)
+        }
+        else {
+            for (i in list.indices) {
+                result.add(list.removeAt(i))
+                yieldAll(dfs(r - 1))
+                list.add(i, result.removeLast())
+            }
+        }
+    }
+    yieldAll(dfs(r))
 }
