@@ -1384,7 +1384,7 @@ fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> {
     val result = mutableListOf<T>()
     fun dfs(r: Int): Sequence<List<T>> = sequence {
         if (r == 0) {
-            yield(result)
+            yield(result.toList())
         }
         else if (list.size == r) {
             result.add(list.removeFirst())
@@ -1409,7 +1409,7 @@ fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
     val result = mutableListOf<T>()
     fun dfs(r: Int): Sequence<List<T>> = sequence {
         if (r == 0) {
-            yield(result)
+            yield(result.toList())
             return@sequence
         }
         for (i in list.indices) {
