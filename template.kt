@@ -1377,11 +1377,10 @@ class ValueSortedMap<K, V : Comparable<V>> : AbstractMutableMap<K, V>() {
         }
     }
 }
-fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> = sequence {
+fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> {
     require(r >= 0) { "r must be non-negative." }
-    val list = this@combinations.toMutableList().asReversed()
-    if (r > list.size) return@sequence
-    list.reverse()
+    val list = this.toMutableList().asReversed().apply { reverse() }
+    if (r > list.size) return emptySequence()
     val result = mutableListOf<T>()
     fun dfs(r: Int): Sequence<List<T>> = sequence {
         if (r == 0) {
@@ -1401,24 +1400,23 @@ fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> = sequence {
             list.add(0, element)
         }
     }
-    yieldAll(dfs(r))
+    return dfs(r)
 }
-fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> = sequence {
+fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
     require(r >= 0) { "r must be non-negative." }
-    val list = this@permutations.toMutableList()
-    if (r > list.size) return@sequence
+    val list = this.toMutableList()
+    if (r > list.size) return emptySequence()
     val result = mutableListOf<T>()
     fun dfs(r: Int): Sequence<List<T>> = sequence {
         if (r == 0) {
             yield(result)
+            return@sequence
         }
-        else {
-            for (i in list.indices) {
-                result.add(list.removeAt(i))
-                yieldAll(dfs(r - 1))
-                list.add(i, result.removeLast())
-            }
+        for (i in list.indices) {
+            result.add(list.removeAt(i))
+            yieldAll(dfs(r - 1))
+            list.add(i, result.removeLast())
         }
     }
-    yieldAll(dfs(r))
+    return dfs(r)
 }
