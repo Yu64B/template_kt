@@ -1377,34 +1377,104 @@ class ValueSortedMap<K, V : Comparable<V>> : AbstractMutableMap<K, V>() {
         }
     }
 }
+// fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> {
+//     require(r >= 0) { "r must be non-negative." }
+//     val list = this.toList()
+//     if (r > list.size) return emptySequence()
+//     val result = mutableListOf<T>()
+//     fun dfs(r: Int, i: Int): Sequence<List<T>> = sequence {
+//         if (r == 0) {
+//             yield(result.toList())
+//         }
+//         else if (list.size - i == r) {
+//             result.add(list[i])
+//             yieldAll(dfs(r - 1, i + 1))
+//             result.removeLast()
+//         }
+//         else {
+//             result.add(list[i])
+//             yieldAll(dfs(r - 1, i + 1))
+//             result.removeLast()
+//             yieldAll(dfs(r, i + 1))
+//         }
+//     }
+//     return dfs(r, 0)
+// }
 fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> {
     require(r >= 0) { "r must be non-negative." }
-    val list = this.toMutableList().asReversed().apply { reverse() }
+    val list = this.toList()
     if (r > list.size) return emptySequence()
     val result = mutableListOf<T>()
-    fun dfs(r: Int): Sequence<List<T>> = sequence {
+    fun dfs(r: Int, i: Int): Sequence<List<T>> = sequence {
         if (r == 0) {
             yield(result.toList())
+            return@sequence
         }
-        else if (list.size == r) {
-            result.add(list.removeFirst())
-            yieldAll(dfs(r - 1))
-            list.add(0, result.removeLast())
-        }
-        else {
-            val element = list.removeFirst()
-            result.add(element)
-            yieldAll(dfs(r - 1))
+        for (j in i .. list.size - r) {
+            result.add(list[j])
+            yieldAll(dfs(r - 1, j + 1))
             result.removeLast()
-            yieldAll(dfs(r))
-            list.add(0, element)
         }
     }
-    return dfs(r)
+    return dfs(r, 0)
 }
-fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
+// fun <T> Iterable<T>.combinations(r: Int): Sequence<List<T>> {
+//     require(r >= 0) { "r must be non-negative." }
+//     val list = this.toList()
+//     if (r > list.size) return emptySequence()
+//     val result = mutableListOf<T>()
+//     fun dfs(r: Int, list: List<T>): Sequence<List<T>> = sequence {
+//         if (r == 0) {
+//             yield(result.toList())
+//             return@sequence
+//         }
+//         for (i in 0 .. list.size - r) {
+//             result.add(list[i])
+//             yieldAll(dfs(r - 1, list.subList(i + 1, list.size)))
+//             result.removeLast()
+//         }
+//     }
+//     return dfs(r, list)
+// }
+fun <T> Iterable<T>.combinationsWithReplacement(r: Int): Sequence<List<T>> {
     require(r >= 0) { "r must be non-negative." }
-    val list = this.toMutableList()
+    val list = this.toList()
+    if (r > list.size) return emptySequence()
+    val result = mutableListOf<T>()
+    fun dfs(r: Int, i: Int): Sequence<List<T>> = sequence {
+        if (r == 0) {
+            yield(result.toList())
+            return@sequence
+        }
+        for (j in i until list.size) {
+            result.add(list[j])
+            yieldAll(dfs(r - 1, j))
+            result.removeLast()
+        }
+    }
+    return dfs(r, 0)
+}
+// fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
+//     require(r >= 0) { "r must be non-negative." }
+//     val list = this.toMutableList()
+//     if (r > list.size) return emptySequence()
+//     val result = mutableListOf<T>()
+//     fun dfs(r: Int): Sequence<List<T>> = sequence {
+//         if (r == 0) {
+//             yield(result.toList())
+//             return@sequence
+//         }
+//         for (i in list.indices) {
+//             result.add(list.removeAt(i))
+//             yieldAll(dfs(r - 1))
+//             list.add(i, result.removeLast())
+//         }
+//     }
+//     return dfs(r)
+// }
+fun <T> Iterable<T>.permutationsWithReplacement(r: Int): Sequence<List<T>> {
+    require(r >= 0) { "r must be non-negative." }
+    val list = this.toList()
     if (r > list.size) return emptySequence()
     val result = mutableListOf<T>()
     fun dfs(r: Int): Sequence<List<T>> = sequence {
@@ -1412,11 +1482,44 @@ fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
             yield(result.toList())
             return@sequence
         }
-        for (i in list.indices) {
-            result.add(list.removeAt(i))
+        for (element in list) {
+            result.add(element)
             yieldAll(dfs(r - 1))
-            list.add(i, result.removeLast())
+            result.removeLast()
         }
     }
     return dfs(r)
+}
+fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
+    require(r >= 0) { "r must be non-negative." }
+    val list = this.toList()
+    val n = list.size
+    if (r > n) return emptySequence()
+    val indices = IntArray(n) { it }
+    val cycles = IntArray(r) { 0 }
+    // val cycles = IntArray(r) { n - it }
+    return sequence {
+        yield(List(r) { list[indices[it]] })
+        while (true) {
+            for (i in r - 1 downTo 0) {
+                val cycle = ++cycles[i]
+                // val cycle = --cycles[i]
+                if (cycle != n - i) {
+                // if (cycle != 0) {
+                    indices[i] = indices[i + cycle].also { indices[i + cycle] = indices[i] }
+                    // indices[i] = indices[n - cycle].also { indices[n - cycle] = indices[i] }
+                    yield(List(r) { list[indices[it]] })
+                    break
+                }
+                else {
+                    indices[n - 1] = indices[i].also { for (j in i until n - 1) indices[j] = indices[j + 1] }
+                    cycles[i] = 0
+                    // cycles[i] = n - i
+                }
+                if (i == 0) {
+                    return@sequence
+                }
+            }
+        }
+    }
 }
