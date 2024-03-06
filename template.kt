@@ -494,7 +494,6 @@ fun UnionFind(size: Int): UnionFind<Int> = IntUnionFind(size)
 interface SegmentTree<E> : List<E> {
     operator fun set(index: Int, value: E)
     fun query(fromIndex: Int, toIndex: Int): E
-    override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E>
 }
 class ImplementationSegmentTree<E> constructor(
     override val size: Int,
@@ -551,53 +550,6 @@ class ImplementationSegmentTree<E> constructor(
         }
         return combine(leftVal, rightVal)
     }
-    // override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> = SubList(this, fromIndex, toIndex)
-    // private class SubList<E>(private val list: ImplementationSegmentTree<E>, private val fromIndex: Int, toIndex: Int) : SegmentTree<E>, AbstractList<E>() {
-    //     override val size = toIndex - fromIndex
-    //     init {
-    //         list.checkRangeIndexes(fromIndex, toIndex, list.size)
-    //     }
-    //     override fun get(index: Int): E {
-    //         list.checkElementIndex(index, size)
-    //         return list.get(fromIndex + index)
-    //     }
-    //     override fun set(index: Int, value: E) {
-    //         list.checkElementIndex(index, size)
-    //         list.set(fromIndex + index, value)
-    //     }
-    //     override fun query(fromIndex: Int, toIndex: Int): E {
-    //         list.checkRangeIndexes(fromIndex, toIndex, size)
-    //         return list.query(this.fromIndex + fromIndex, this.fromIndex + toIndex)
-    //     }
-    //     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> {
-    //         list.checkRangeIndexes(fromIndex, toIndex, size)
-    //         return list.subList(this.fromIndex + fromIndex, this.fromIndex + toIndex)
-    //     }
-    // }
-    override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> {
-        checkRangeIndexes(fromIndex, toIndex, size)
-        val list = this
-        return object : SegmentTree<E>, AbstractList<E>() {
-            private val fromIndex = fromIndex
-            override val size = toIndex - fromIndex
-            override operator fun get(index: Int): E {
-                checkElementIndex(index, size)
-                return list.get(fromIndex + index)
-            }
-            override operator fun set(index: Int, value: E) {
-                checkElementIndex(index, size)
-                list.set(fromIndex + index, value)
-            }
-            override fun query(fromIndex: Int, toIndex: Int): E {
-                checkRangeIndexes(fromIndex, toIndex, size)
-                return list.query(this.fromIndex + fromIndex, this.fromIndex + toIndex)
-            }
-            override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> {
-                checkRangeIndexes(fromIndex, toIndex, size)
-                return list.subList(this.fromIndex + fromIndex, this.fromIndex + toIndex)
-            }
-        }
-    }
     private fun checkElementIndex(index: Int, size: Int) {
         if (index < 0 || index >= size) {
             throw IndexOutOfBoundsException("index: $index, size: $size")
@@ -612,18 +564,145 @@ class ImplementationSegmentTree<E> constructor(
         }
     }
 }
-fun <T> SegmentTree(size: Int, identity: T, combine: (T, T) -> T): SegmentTree<T> {
-    return ImplementationSegmentTree(size, identity, combine)
-}
-fun <T> SegmentTree(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T): SegmentTree<T> {
-    return ImplementationSegmentTree(size, init, identity, combine)
-}
 fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
     if (this is Collection) {
         return ImplementationSegmentTree(this, identity, combine)
     }
     return ImplementationSegmentTree(this.toList(), identity, combine)
 }
+// interface SegmentTree<E> : List<E> {
+//     operator fun set(index: Int, value: E)
+//     fun query(fromIndex: Int, toIndex: Int): E
+//     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E>
+// }
+// class ImplementationSegmentTree<E> constructor(
+//     override val size: Int,
+//     private val identity: E,
+//     private val combine: (E, E) -> E
+// ) : SegmentTree<E>, AbstractList<E>() {
+//     private val node = MutableList(size * 2) { identity }
+//     constructor(elements: Collection<E>, identity: E, combine: (E, E) -> E) : this(elements.size, identity, combine) {
+//         for ((index, element) in elements.withIndex()) {
+//             node[size + index] = element
+//         }
+//         for (index in size - 1 downTo 1) {
+//             node[index] = combine(node[index * 2], node[index * 2 + 1])
+//         }
+//     }
+//     constructor(size: Int, init: (Int) -> E, identity: E, combine: (E, E) -> E) : this(size, identity, combine) {
+//         for (index in 0 until size) {
+//             node[size + index] = init(index)
+//         }
+//         for (index in size - 1 downTo 1) {
+//             node[index] = combine(node[index * 2], node[index * 2 + 1])
+//         }
+//     }
+//     override fun get(index: Int): E {
+//         checkElementIndex(index, size)
+//         return node[size + index]
+//     }
+//     override fun set(index: Int, value: E) {
+//         checkElementIndex(index, size)
+//         node[size + index] = value
+//         var count = (size + index) / 2
+//         while (count > 0) {
+//             node[count] = combine(node[count * 2], node[count * 2 + 1])
+//             count /= 2
+//         }
+//     }
+//     override fun query(fromIndex: Int, toIndex: Int): E {
+//         checkRangeIndexes(fromIndex, toIndex, size)
+//         var left = size + fromIndex
+//         var right = size + toIndex - 1
+//         var leftVal = identity
+//         var rightVal = identity
+//         while (left <= right) {
+//             if (left % 2 == 1) {
+//                 leftVal = combine(leftVal, node[left])
+//                 left++
+//             }
+//             if (right % 2 == 0) {
+//                 rightVal = combine(node[right], rightVal)
+//                 right--
+//             }
+//             left /= 2
+//             right /= 2
+//         }
+//         return combine(leftVal, rightVal)
+//     }
+//     // override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> = SubList(this, fromIndex, toIndex)
+//     // private class SubList<E>(private val list: ImplementationSegmentTree<E>, private val fromIndex: Int, toIndex: Int) : SegmentTree<E>, AbstractList<E>() {
+//     //     override val size = toIndex - fromIndex
+//     //     init {
+//     //         list.checkRangeIndexes(fromIndex, toIndex, list.size)
+//     //     }
+//     //     override fun get(index: Int): E {
+//     //         list.checkElementIndex(index, size)
+//     //         return list.get(fromIndex + index)
+//     //     }
+//     //     override fun set(index: Int, value: E) {
+//     //         list.checkElementIndex(index, size)
+//     //         list.set(fromIndex + index, value)
+//     //     }
+//     //     override fun query(fromIndex: Int, toIndex: Int): E {
+//     //         list.checkRangeIndexes(fromIndex, toIndex, size)
+//     //         return list.query(this.fromIndex + fromIndex, this.fromIndex + toIndex)
+//     //     }
+//     //     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> {
+//     //         list.checkRangeIndexes(fromIndex, toIndex, size)
+//     //         return list.subList(this.fromIndex + fromIndex, this.fromIndex + toIndex)
+//     //     }
+//     // }
+//     override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> {
+//         checkRangeIndexes(fromIndex, toIndex, size)
+//         val list = this
+//         return object : SegmentTree<E>, AbstractList<E>() {
+//             private val fromIndex = fromIndex
+//             override val size = toIndex - fromIndex
+//             override operator fun get(index: Int): E {
+//                 checkElementIndex(index, size)
+//                 return list.get(fromIndex + index)
+//             }
+//             override operator fun set(index: Int, value: E) {
+//                 checkElementIndex(index, size)
+//                 list.set(fromIndex + index, value)
+//             }
+//             override fun query(fromIndex: Int, toIndex: Int): E {
+//                 checkRangeIndexes(fromIndex, toIndex, size)
+//                 return list.query(this.fromIndex + fromIndex, this.fromIndex + toIndex)
+//             }
+//             override fun subList(fromIndex: Int, toIndex: Int): SegmentTree<E> {
+//                 checkRangeIndexes(fromIndex, toIndex, size)
+//                 return list.subList(this.fromIndex + fromIndex, this.fromIndex + toIndex)
+//             }
+//         }
+//     }
+//     private fun checkElementIndex(index: Int, size: Int) {
+//         if (index < 0 || index >= size) {
+//             throw IndexOutOfBoundsException("index: $index, size: $size")
+//         }
+//     }
+//     private fun checkRangeIndexes(fromIndex: Int, toIndex: Int, size: Int) {
+//         if (fromIndex < 0 || toIndex > size) {
+//             throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
+//         }
+//         if (fromIndex > toIndex) {
+//             throw IllegalArgumentException("fromIndex: $fromIndex > toIndex: $toIndex")
+//         }
+//     }
+// }
+// fun <T> SegmentTree(size: Int, identity: T, combine: (T, T) -> T): SegmentTree<T> {
+//     return ImplementationSegmentTree(size, identity, combine)
+// }
+// fun <T> SegmentTree(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T): SegmentTree<T> {
+//     return ImplementationSegmentTree(size, init, identity, combine)
+// }
+// fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
+//     if (this is Collection) {
+//         return ImplementationSegmentTree(this, identity, combine)
+//     }
+//     return ImplementationSegmentTree(this.toList(), identity, combine)
+// }
 // interface SegmentTree<E> : List<E> {
 //     abstract operator fun set(index: Int, value: E)
 //     abstract fun query(fromIndex: Int, toIndex: Int): E
