@@ -1,4 +1,4 @@
-import java.awt.Point
+// import java.awt.Point
 import kotlin.random.Random
 import java.lang.ProcessBuilder.Redirect
 import java.util.concurrent.TimeUnit
@@ -801,9 +801,9 @@ fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTre
 // fun <T> SegmentTree(size: Int, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(size, identity, combine)
 // fun <T> SegmentTree(elements: Iterable<T>, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(elements, identity, combine)
 // fun <T> SegmentTree(size: Int, init: (Int) -> T, identity: T, combine: (T, T) -> T): SegmentTree<T> = ImplementationSegmentTree(size, init, identity, combine)
-// import java.awt.Point
-operator fun Point.component1(): Int = x
-operator fun Point.component2(): Int = y
+// // import java.awt.Point
+// operator fun Point.component1(): Int = x
+// operator fun Point.component2(): Int = y
 // import kotlin.random.Random
 class XorShiftRandom : Random {
     private var x = 2463534242U
@@ -1424,6 +1424,23 @@ fun IntSimpleWightedDirectedGraph<Long>.dijkstra(source: Int): Pair<List<Long?>,
     }
     return Pair(distances, previouses)
 }
+typealias WeightedDirectedEdge<K, V> = Triple<K, K, V>
+interface IntWeightedDirectedGraph<V> : List<Set<WeightedDirectedEdge<Int, V>>> {
+    val vertices: IntRange
+    val edges: Set<WeightedDirectedEdge<Int, V>>
+    fun addEdge(from: Int, to: Int, weight: V): Boolean
+}
+class IntWeightedDirectedGraphImpl<V>(override val size: Int) : IntWeightedDirectedGraph<V>, AbstractList<Set<WeightedDirectedEdge<Int, V>>>() {
+    val graph = List(size) { mutableSetOf<WeightedDirectedEdge<Int, V>>() }
+    override val vertices get(): IntRange = this.indices
+    override val edges get(): Set<WeightedDirectedEdge<Int, V>> = this.flatten().toSet()
+    override fun addEdge(from: Int, to: Int, weight: V): Boolean {
+        return graph[from].add(WeightedDirectedEdge(from, to, weight))
+    }
+    override fun get(index: Int): Set<WeightedDirectedEdge<Int, V>> {
+        return graph.get(index)
+    }
+}
 // class ValueSortedMap<K, V : Comparable<V>> : AbstractMutableMap<K, V>() {
 //     private val set: java.util.SortedSet<MutableMap.MutableEntry<K, V>> = java.util.TreeSet()
 //     private val map: MutableMap<K, V> = LinkedHashMap()
@@ -1644,3 +1661,130 @@ fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
         }
     }
 }
+// typealias Interval<T> = ClosedRange<T>
+// interface DisjointIntervalSet<E : Comparable<E>> : SortedSet<Interval<E>> {
+//     fun addInterval(interval: Interval<E>): Boolean
+//     fun removeInterval(interval: Interval<E>): Boolean
+//     fun findInterval(point: E): Interval<E>?
+// }
+// class LongDisjointIntervalSet : DisjointIntervalSet<Long>, AbstractSet<Interval<Long>>() {
+//     infix fun Interval<Long>.intersect(other: Interval<Long>): Interval<Long> {
+//         val start = maxOf(this.start, other.start)
+//         val endInclusive = minOf(this.endInclusive, other.endInclusive)
+//         return LongRange(start, endInclusive)
+//     }
+//     private val intervals = TreeSet<Interval<Long>>(compareBy { it.start })
+//     override val size get(): Int = intervals.size
+//     override fun iterator(): MutableIterator<Interval<Long>> {
+//         return intervals.iterator()
+//     }
+//     override fun contains(element: Interval<Long>): Boolean {
+//         return intervals.contains(element)
+//     }
+//     override fun addInterval(interval: Interval<Long>): Boolean {
+//         var foundInterval = findInterval(interval.start)
+//         if (foundInterval != null && interval.endInclusive <= foundInterval.endInclusive) {
+//             return false
+//         }
+//         var currentInterval = interval
+//         val previousInterval = intervals.floor(currentInterval)
+//         if (previousInterval != null && !(currentInterval intersect previousInterval).isEmpty()) {
+//             currentInterval = LongRange(previousInterval.start, currentInterval.endInclusive)
+//         }
+//         val iterator = intervals.subSet(currentInterval, LongRange(interval.endInclusive + 2L, interval.endInclusive + 2L)).iterator()
+//         // while (iterator.hasNext()) {
+//         //     val nextInterval = iterator.next()
+//         //     if ((currentInterval intersect nextInterval).isEmpty()) {
+//         //         break
+//         //     }
+//         //     currentInterval = LongRange(currentInterval.start, nextInterval.endInclusive)
+//         //     iterator.remove()
+//         // }
+//         while (iterator.hasNext()) {
+//             val nextInterval = iterator.next()
+//             currentInterval = LongRange(currentInterval.start, nextInterval.endInclusive)
+//             iterator.remove()
+//         }
+//         return true
+//     }
+// }
+// fun DisjointIntervalSet(): DisjointIntervalSet<Long> {
+//     return LongDisjointIntervalSet()
+// }
+// typealias Interval<T> = ClosedRange<T>
+// data class Interval<T : Comparable<T>>(override val start: T, override val endInclusive: T) : ClosedRange<T>
+// interface DisjointIntervalSet<T : Comparable<T>> : Set<Interval<T>> {
+//     fun findInterval(point: T): Interval<T>?
+//     fun addInterval(interval: Interval<T>): Boolean
+//     fun removeInterval(interval: Interval<T>): Boolean
+// }
+// class DisjointIntervalSetImpl<T : Comparable<T>> : DisjointIntervalSet<T>, AbstractSet<Interval<T>>() {
+//     private val intervals = sortedSetOf<Interval<T>>(compareBy { it.start })
+//     override val size get(): Int = intervals.size
+//     override fun iterator(): Iterator<Interval<T>> {
+//         return intervals.iterator()
+//     }
+//     // override fun contains(element: Interval<T>): Boolean {
+//     //     return intervals.contains(element)
+//     // }
+//     override fun findInterval(point: T): Interval<T>? {
+//         val interval = intervals.floor(Interval(point, point))
+//         if (interval == null || interval.endInclusive < point) {
+//             return null
+//         }
+//         return interval
+//     }
+//     override fun addInterval(interval: Interval<T>): Boolean {
+//         var (start, endInclusive) = interval
+//         val leftInterval = intervals.floor(Interval(start, start))
+//         if (leftInterval != null && endInclusive <= leftInterval.endInclusive) {
+//             return false
+//         }
+//         if (leftInterval != null && leftInterval.endInclusive >= start) {
+//             start = leftInterval.start
+//         }
+//         val rightInterval = intervals.floor(Interval(endInclusive, endInclusive))
+//         if (rightInterval != null && rightInterval.endInclusive > endInclusive) {
+//             endInclusive = rightInterval.endInclusive
+//         }
+//         for (currentInterval in intervals.subSet(Interval(start, start), true, Interval(endInclusive, endInclusive), true)) {
+            
+//         }
+//         val iterator = intervals.tailSet(Interval(start, start)).iterator()
+//         while ()
+//     }
+//     override fun removeInterval(interval: Interval<T>): Boolean {
+         
+//     }
+// }
+typealias Point = Pair<Int, Int>
+val Point.y get(): Int = this.first
+val Point.x get(): Int = this.second
+typealias Grid<T> = List<List<T>>
+typealias MutableGrid<T> = List<MutableList<T>>
+fun <T> MutableGrid(height: Int, width: Int, init: (Point) -> T): MutableGrid<T> {
+    return List(height) { y -> MutableList(width) { x -> init(Point(y, x)) } }
+}
+fun <T> MutableGrid(size: Int, init: (Point) -> T): MutableGrid<T> {
+    return MutableGrid(size, size, init)
+}
+fun <T> Grid(height: Int, width: Int, init: (Point) -> T): Grid<T> {
+    return MutableGrid(height, width, init)
+}
+fun <T> Grid(size: Int, init: (Point) -> T): Grid<T> {
+    return Grid(size, size, init)
+}
+// fun SortedSet<Long>.elementAt(index: Int): Long {
+//     var ok = this.first()
+//     var ng = this.last() + 1L
+//     while (ng - ok > 1) {
+//         val mid = (ok + ng).ushr(1)
+//         if (this.headSet(mid).size <= index) {
+//             ok = mid
+//         }
+//         else {
+//             ng = mid
+//         }
+//     }
+//     return ok
+// }
