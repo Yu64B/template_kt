@@ -405,16 +405,6 @@
 		],
 		"description": "Segment tree"
 	},
-	"Point": {
-		"prefix": ["Point"],
-		"body": [
-			"${1:import java.awt.Point}",
-			"operator fun Point.component1(): Int = x",
-			"operator fun Point.component2(): Int = y",
-			""
-		],
-		"description": "Point"
-	},
 	"Xor shift random": {
 		"prefix": ["XorShiftRandom"],
 		"body": [
@@ -681,5 +671,36 @@
 			""
 		],
 		"description": "Prime factorize"
+	},
+	"Point": {
+		"prefix": ["Point"],
+		"body": [
+			"typealias Point = Pair<Int, Int>",
+			"val Point.y get(): Int = this.first",
+			"val Point.x get(): Int = this.second",
+			""
+		],
+		"description": "Point"
+	},
+	"Grid": {
+		"prefix": ["Grid"],
+		"body": [
+			"typealias Grid<T> = List<List<T>>",
+			"typealias MutableGrid<T> = List<MutableList<T>>",
+			"fun <T> MutableGrid(height: Int, width: Int, init: (Point) -> T): MutableGrid<T> {",
+			"\treturn List(height) { y -> MutableList(width) { x -> init(Point(y, x)) } }",
+			"}",
+			"fun <T> MutableGrid(size: Int, init: (Point) -> T): MutableGrid<T> {",
+			"\treturn MutableGrid(size, size, init)",
+			"}",
+			"fun <T> Grid(height: Int, width: Int, init: (Point) -> T): Grid<T> {",
+			"\treturn MutableGrid(height, width, init)",
+			"}",
+			"fun <T> Grid(size: Int, init: (Point) -> T): Grid<T> {",
+			"\treturn Grid(size, size, init)",
+			"}",
+			""
+		],
+		"description": "Grid"
 	}
 }
