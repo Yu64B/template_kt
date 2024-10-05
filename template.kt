@@ -495,11 +495,7 @@ interface SegmentTree<E> : List<E> {
     operator fun set(index: Int, value: E)
     fun query(fromIndex: Int, toIndex: Int): E
 }
-class ImplementationSegmentTree<E> constructor(
-    override val size: Int,
-    private val identity: E,
-    private val combine: (E, E) -> E
-) : SegmentTree<E>, AbstractList<E>() {
+class SegmentTreeImpl<E> constructor(override val size: Int, private val identity: E, private val combine: (E, E) -> E) : SegmentTree<E>, AbstractList<E>() {
     private val node = MutableList(size * 2) { identity }
     constructor(elements: Collection<E>, identity: E, combine: (E, E) -> E) : this(elements.size, identity, combine) {
         for ((index, element) in elements.withIndex()) {
@@ -566,9 +562,9 @@ class ImplementationSegmentTree<E> constructor(
 }
 fun <T> Iterable<T>.toSegmentTree(identity: T, combine: (T, T) -> T): SegmentTree<T> {
     if (this is Collection) {
-        return ImplementationSegmentTree(this, identity, combine)
+        return SegmentTreeImpl(this, identity, combine)
     }
-    return ImplementationSegmentTree(this.toList(), identity, combine)
+    return SegmentTreeImpl(this.toList(), identity, combine)
 }
 // interface SegmentTree<E> : List<E> {
 //     operator fun set(index: Int, value: E)
