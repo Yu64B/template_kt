@@ -1,3 +1,4 @@
+package template
 // import java.awt.Point
 import kotlin.random.Random
 import java.lang.ProcessBuilder.Redirect
@@ -1751,6 +1752,164 @@ fun <T> Iterable<T>.permutations(r: Int = count()): Sequence<List<T>> {
 //     }
 //     override fun removeInterval(interval: Interval<T>): Boolean {
          
+//     }
+// }
+@OptIn(kotlin.ExperimentalStdlibApi::class)
+interface DisjointIntervalSet<E : Comparable<E>> : Set<OpenEndRange<E>> {
+    fun getInterval(point: E): OpenEndRange<E>?
+    fun addInterval(interval: OpenEndRange<E>): Boolean
+    fun removeInterval(interval: OpenEndRange<E>): Boolean
+}
+@OptIn(kotlin.ExperimentalStdlibApi::class)
+class DisjointIntervalSetImpl<E : Comparable<E>> : DisjointIntervalSet<E>, AbstractSet<OpenEndRange<E>>() {
+    private val intervals = sortedSetOf<OpenEndRange<E>>(compareBy({ it.start }, { it.endExclusive }))
+    override val size get(): Int = intervals.size
+    override fun iterator(): Iterator<OpenEndRange<E>> {
+        return intervals.iterator()
+    }
+    fun floorInterval(point: E): OpenEndRange<E>? {
+        return intervals.floor(point..<point)
+    }
+    fun ceilingInterval(point: E): OpenEndRange<E>? {
+        val interval = intervals.floor(point..<point)
+        if (interval != null && point in interval) {
+            return interval
+        }
+        else {
+            return intervals.ceiling(point..<point)
+        }
+    }
+    fun lowerInterval(point: E): OpenEndRange<E>? {
+        val interval = intervals.lower(point..<point)
+        if (interval != null && point in interval) {
+            return intervals.lower(interval.start..<interval.start)
+        }
+        else {
+            return interval
+        }
+    }
+    fun higherInterval(point: E): OpenEndRange<E>? {
+        return intervals.higher(point..<point)
+    }
+    override fun getInterval(point: E): OpenEndRange<E>? {
+        val interval = intervals.floor(point..<point)
+        if (interval != null && point in interval) {
+            return interval
+        }
+        else {
+            return null
+        }
+    }
+    fun addAndGetIntervals(interval: OpenEndRange<E>): Set<OpenEndRange<E>> {
+        if (interval.isEmpty()) {
+            return emptySet()
+        }
+        val firstInterval = intervals.floor(interval.start..<interval.start)
+        if (firstInterval != null && firstInterval.endExclusive >= interval.endExclusive) {
+            return emptySet()
+        }
+        val start: E
+        if (firstInterval != null && firstInterval.endExclusive >= interval.start) {
+            start = firstInterval.start
+        }
+        else {
+            start = interval.start
+        }
+        val lastInterval = intervals.floor(interval.endExclusive..<interval.endExclusive)
+        val endExclusive: E
+        if (lastInterval != null && lastInterval.endExclusive > interval.endExclusive) {
+            endExclusive = lastInterval.endExclusive
+        }
+        else {
+            endExclusive = interval.endExclusive
+        }
+        val iterator = intervals.subSet(start..<start, endExclusive..<endExclusive).iterator()
+        val addedIntervals = sortedSetOf<OpenEndRange<E>>(compareBy({ it.start }, { it.endExclusive }))
+        var currentStart = interval.start
+        while (iterator.hasNext()) {
+            val currentInterval = iterator.next()
+            iterator.remove()
+            if (currentInterval.start > currentStart) {
+                addedIntervals.add(currentStart..<currentInterval.start)
+            }
+            currentStart = currentInterval.endExclusive
+        }
+        if (interval.endExclusive > currentStart) {
+            addedIntervals.add(currentStart..<interval.endExclusive)
+        }
+        intervals.add(start..<endExclusive)
+        return addedIntervals
+    }
+    override fun addInterval(interval: OpenEndRange<E>): Boolean {
+        return addAndGetIntervals(interval).isNotEmpty()
+    }
+    fun removeAndGetIntervals(interval: OpenEndRange<E>): Set<OpenEndRange<E>> {
+        if (interval.isEmpty()) {
+            return emptySet()
+        }
+        val lastInterval = intervals.lower(interval.endExclusive..<interval.endExclusive)
+        if (lastInterval == null || lastInterval.endExclusive <= interval.start) {
+            return emptySet()
+        }
+        val endExclusive: E
+        if (lastInterval.endExclusive > interval.endExclusive) {
+            endExclusive = lastInterval.endExclusive
+        }
+        else {
+            endExclusive = interval.endExclusive
+        }
+        val firstInterval = intervals.lower(interval.start..<interval.start)
+        val start: E
+        if (firstInterval != null && firstInterval.endExclusive > interval.start) {
+            start = firstInterval.start
+        }
+        else {
+            start = interval.start
+        }
+        val iterator = intervals.subSet(start..<start, endExclusive..<endExclusive).iterator()
+        val removedIntervals = sortedSetOf<OpenEndRange<E>>(compareBy({ it.start }, { it.endExclusive }))
+        while (iterator.hasNext()) {
+            val currentInterval = iterator.next()
+            iterator.remove()
+            if (currentInterval.start >= interval.start && currentInterval.endExclusive <= interval.endExclusive) {
+                removedIntervals.add(currentInterval)
+                continue
+            }
+            val currentStart: E
+            if (currentInterval.start < interval.start) {
+                currentStart = interval.start
+            }
+            else {
+                currentStart = currentInterval.start
+            }
+            val currentEndExclusive: E
+            if (currentInterval.endExclusive > interval.endExclusive) {
+                currentEndExclusive = interval.endExclusive
+            }
+            else {
+                currentEndExclusive = currentInterval.endExclusive
+            }
+            removedIntervals.add(currentStart..<currentEndExclusive)
+        }
+        if (start < interval.start) {
+            intervals.add(start..<interval.start)
+        }
+        if (endExclusive > interval.endExclusive) {
+            intervals.add(interval.endExclusive..<endExclusive)
+        }
+        return removedIntervals
+    }
+    override fun removeInterval(interval: OpenEndRange<E>): Boolean {
+        return removeAndGetIntervals(interval).isNotEmpty()
+    }
+}
+// @OptIn(kotlin.ExperimentalStdlibApi::class)
+// class LongDisjointIntervalSet : DisjointIntervalSetImpl<Long>() {
+//     override fun floorInterval(point: Long): LongRange? {
+//         val interval = super.floorInterval(point)
+//         if (interval == null) return null
+//         if (interval is LongRange) return interval
+//         return interval.start..<interval.endExclusive
 //     }
 // }
 typealias Point = Pair<Int, Int>
